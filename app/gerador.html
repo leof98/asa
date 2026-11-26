@@ -206,6 +206,11 @@ select{font:14px var(--f-body);color:var(--fg);background:var(--bg);border:1px s
 .recbar .rsep{width:1px;height:22px;background:var(--map-line)}
 .recbar .rec{background:#3a1020;color:#ff8a8a;border:1px solid #7a2a3a;border-radius:999px;padding:5px 12px;font-size:12.5px}
 .recbar .rec.on{background:#e0263a;color:#fff;border-color:#e0263a;animation:recp 1.2s infinite}
+/* fechada: só o botão "Gravar vídeo" (e o print do take); aberta: as opções de gravação, com o × no fim */
+.recbar.fechada>:not(#recOpen):not(#simShot){display:none}
+.recbar:not(.fechada) #recOpen{display:none}
+.recbar .recx{order:99;margin-left:auto;background:none;border:0;color:var(--map-fg);opacity:.7;font-size:18px;line-height:1;padding:2px 8px}
+.recbar .recx:hover:not(:disabled){opacity:1}
 @keyframes recp{50%{opacity:.75}}
 .tabs .simtab{border-style:dashed;margin-left:auto}
 .seg3{display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--map-line);border-radius:7px;overflow:hidden}
@@ -370,7 +375,8 @@ select{font:14px var(--f-body);color:var(--fg);background:var(--bg);border:1px s
         <div class="sf"><span>Distância</span><input type="range" id="sr-dist" min="10" max="1200" step="1"><input type="number" id="sn-dist" min="10" max="2000" step="1"><em>m</em></div>
         <div class="sf"><span>Altura</span><input type="range" id="sr-alt" min="2" max="200" step="1"><input type="number" id="sn-alt" min="2" max="500" step="1"><em>m</em></div>
       </div>
-      <div class="recbar" id="recbar" hidden>
+      <div class="recbar fechada" id="recbar" hidden>
+        <button type="button" class="rec" id="recOpen" title="Mostra as opções de gravação de vídeo">● Gravar vídeo</button>
         <button type="button" class="rec" id="recFree" title="Grava o que você fizer nos controles">● Gravar</button>
         <span class="rsep"></span>
         <label>Movimento <select id="mvKind"><option value="alt">Subida / descida</option><option value="angle">Órbita</option><option value="yaw">Giro no lugar</option><option value="dist">Aproximação / afastamento</option></select></label>
@@ -378,6 +384,7 @@ select{font:14px var(--f-body);color:var(--fg);background:var(--bg);border:1px s
         <label>até <input type="number" id="mvB" step="1"></label><em id="mvU">m</em>
         <label>em <input type="number" id="mvT" min="2" max="120" step="1" value="10"></label><em>s</em>
         <button type="button" class="sec" id="mvGo">▶ Gravar movimento</button>
+        <button type="button" class="recx" id="recClose" title="Esconder as opções de gravação" aria-label="Esconder as opções de gravação">×</button>
       </div>
       <div class="takebar" id="takebar" hidden>
         <label class="chk2"><input type="checkbox" id="tkOrbit"> Órbita</label>
@@ -1189,7 +1196,12 @@ function recUI(){
   b.textContent=on?`■ Parar ${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}`:'● Gravar';
   for(const id of['mvKind','mvA','mvB','mvT','mvGo'])$(id).disabled=on||MOVING;
   b.disabled=MOVING;
+  // terminou de gravar: as opções de gravação somem sozinhas
+  const ocupado=on||MOVING;if(recUI.ocupado&&!ocupado)$('recbar').classList.add('fechada');recUI.ocupado=ocupado;
+  $('recClose').disabled=ocupado;
 }
+$('recOpen').addEventListener('click',()=>{mvDefaults();$('recbar').classList.remove('fechada')});
+$('recClose').addEventListener('click',()=>{if(!REC&&!MOVING)$('recbar').classList.add('fechada')});
 $('showB').addEventListener('change',e=>{P.showB=e.target.checked;save();show3D(is3D());scheduleDraw()});
 $('recFree').addEventListener('click',()=>{REC?recStop():recStart('gravação livre')});
 async function waitTiles(ms){const t0=Date.now();while(Date.now()-t0<ms){viewer.scene.requestRender();await nextFrame();if(tileset&&tileset.tilesLoaded)return}}
