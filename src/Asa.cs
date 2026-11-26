@@ -531,7 +531,7 @@ sealed class Janela : Form
     {
         StringBuilder b = new StringBuilder();
         foreach (char ch in (nome ?? "").Trim()) b.Append(Array.IndexOf(Path.GetInvalidFileNameChars(), ch) >= 0 ? '-' : ch);
-        string s = b.ToString().Trim().TrimEnd('.');
+        string s = b.ToString().Trim().TrimEnd(new char[] { '.' });
         if (s.Length > 90) s = s.Substring(0, 90).Trim();
         return s.Length == 0 ? "Sem nome" : s;
     }

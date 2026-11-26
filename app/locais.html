@@ -448,6 +448,7 @@ function clustersIn(cat){
   return cl.sort((a,b)=>(b.lead.on-a.lead.on)||(b.s-a.s));
 }
 const OPEN=new Set();
+const EXTRAS=3;   // quantos não marcados aparecem por categoria além dos marcados
 const secOf=p=>p.sec||CAT[p.cat]?.sec||'ico';
 /* ---------- padrão, redes e pontuação ---------- */
 const DEF_CHAINS=`# padrão escrito = ideal · entre parênteses = aceitável · fora da linha = não entra
@@ -610,13 +611,16 @@ function drawList(){
     let cl=clustersIn(c.id);
     if(G.onlyOn)cl=cl.filter(x=>x.ps.some(p=>p.on));
     if(!cl.length)return'';
+    // marcados + até 5 de melhor nota; o resto (e os pouco avaliados) fica em "+N outros"
     const few=cl.filter(x=>fewVotes(x.lead)&&!x.lead.on);cl=cl.filter(x=>!few.includes(x));
+    const marc=cl.filter(x=>x.ps.some(p=>p.on)),livres=cl.filter(x=>!marc.includes(x));
+    cl=marc.concat(livres.slice(0,EXTRAS));const resto=livres.slice(EXTRAS).concat(few);
     const fk='few:'+c.id,fo=OPEN.has(fk);
     const n=P.places.filter(p=>p.cat===c.id&&p.on).length;
     return`<div class="grp"><h3>${esc(c.pl)} <span>${n?n+' marcado'+(n>1?'s':''):''}</span></h3>${cl.map(x=>{
       const open=OPEN.has(x.lead.gid||x.lead.name),others=G.onlyOn?x.others.filter(p=>p.on):x.others;
       return row(x.lead,false)+(others.length?`<button type="button" class="more" data-open="${esc(x.lead.gid||x.lead.name)}" aria-expanded="${open}">${open?'Esconder':'+'+others.length} parecido${others.length>1?'s':''}</button>`+(open?others.map(p=>row(p,true)).join(''):''):'');
-    }).join('')}${few.length?`<button type="button" class="more" data-open="${fk}" aria-expanded="${fo}">${fo?'Esconder os pouco avaliados':`+${few.length} com poucas avaliações`}</button>`+(fo?few.map(x=>row(x.lead,true)+x.others.map(p=>row(p,true)).join('')).join(''):''):''}</div>`}).join('')||'<div class="empty">Nenhum lugar marcado ainda.</div>';
+    }).join('')}${resto.length?`<button type="button" class="more" data-open="${fk}" aria-expanded="${fo}">${fo?'Esconder os outros':`+${resto.length} outro${resto.length>1?'s':''}${few.length?` (${few.length===resto.length?'todos':few.length} com poucas avaliações)`:''}`}</button>`+(fo?resto.map(x=>row(x.lead,true)+x.others.map(p=>row(p,true)).join('')).join(''):''):''}</div>`}).join('')||'<div class="empty">Nenhum lugar marcado ainda.</div>';
 }
 $('groups').addEventListener('change',e=>{
   const row=e.target.closest('.pl');if(!row)return;const p=P.places[+row.dataset.i];
