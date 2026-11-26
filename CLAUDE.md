@@ -13,7 +13,7 @@ Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0. A 0.2.0 já tem commit 
 
 ## 1. Como as mudanças chegam ao Asa (decidido em 26/11/2026)
 
-- O Asa roda **só no PC do usuário, direto da pasta do repositório**, `E:\Projetos\pessoalsa`. O Claude trabalha nessa mesma pasta.
+- O Asa roda **só no PC do usuário, direto da pasta do repositório**, `E:\Projetos\pessoal\asa`. O Claude trabalha nessa mesma pasta.
 - Por isso **não se usa release nem atualização pelo GitHub**. A mudança vale assim que é feita:
   - mudou só `app\`: o usuário fecha e abre o Asa;
   - mudou `src\Asa.cs`: suba a versão (`Versao` em `src\Asa.cs` e `versao.json`) e recompile com `Compilar.cmd` no Windows. Com o Asa aberto, renomeie antes o exe (`Asa.exe` para `Asa.old.exe`, que o git ignora) e avise o usuário para reabrir.
