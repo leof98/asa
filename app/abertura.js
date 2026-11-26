@@ -1,6 +1,6 @@
 'use strict';
 // A abertura do Asa: começa igual à da Central (o logo da Criando Valor se montando) e a asa, que é o V do mesmo logo,
-// atravessa a tela, apaga "CRIANDO VALOR" e deixa "ASA"; por fim entra "Assistente de Tour". Uma vez por abertura do
+// atravessa a tela e apaga "CRIANDO VALOR"; com ele já sumido, entra "ASA" e por fim "Assistente de Tour". Uma vez por abertura do
 // programa; um clique ou uma tecla acelera; com "reduzir movimento" no Windows, não aparece.
 (function(){
   try{if(sessionStorage.getItem('asa-abertura')||(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))return;sessionStorage.setItem('asa-abertura','1')}catch(e){return}
@@ -19,18 +19,18 @@
    q('.cv-v').animate([{transform:tc,opacity:1},{offset:.1,transform:tc,opacity:1},{offset:.18,transform:tc,easing:anda},{offset:.24,opacity:0},{offset:.52,transform:'translateX(0)',opacity:0},{transform:'translateX(0)',opacity:0}],P1),
    q('.cv-riando').animate([{clipPath:'inset(0 0 0 60.08%)'},{offset:.18,clipPath:'inset(0 0 0 60.08%)',easing:anda},{offset:.52,clipPath:'inset(0 0 0 15.81%)'},{clipPath:'inset(0 0 0 15.81%)'}],P1),
    q('.cv-valor').animate([{opacity:0,transform:'translateX(3.52%)'},{offset:.46,opacity:0,transform:'translateX(3.52%)',easing:'cubic-bezier(.2,.7,.3,1)'},{offset:.6,opacity:1},{offset:.62,transform:'translateX(0)'},{opacity:1,transform:'translateX(0)'}],P1)];
-  // 2) a asa (o V do logo) atravessa da direita para a esquerda: apaga CRIANDO VALOR e deixa ASA
+  // 2) a asa (o V do logo) atravessa da direita para a esquerda e apaga CRIANDO VALOR; o ASA só entra depois que ele sumiu
   const D2=R(2050),T2=R(1250),P2={duration:T2,delay:D2,fill:'both',easing:anda};
   A.push(q('.asa-w').animate([{opacity:0,transform:'translateX(59.54%) rotate(-8deg) scale(.9)'},{opacity:1,offset:.12,transform:'translateX(53.58%) rotate(-5deg) scale(1)'},{offset:.8,transform:'translateX(-0.53%) rotate(1deg)'},{opacity:1,transform:'translateX(0) rotate(0)'}],P2));
-  A.push(q('.asa-l').animate([{clipPath:'inset(0 0 0 100%)'},{offset:.12,clipPath:'inset(0 0 0 94.87%)'},{offset:.8,clipPath:'inset(0 0 0 40.75%)'},{clipPath:'inset(0 0 0 41.28%)'}],P2));
+  A.push(q('.asa-l').animate([{opacity:0,transform:'translateX(1.5%)'},{opacity:1,transform:'translateX(0)'}],{duration:R(500),delay:R(2950),fill:'both',easing:'cubic-bezier(.2,.7,.3,1)'}));
   A.push(q('.cvp').animate([{clipPath:'inset(0 0 0 0)',opacity:1},{offset:.12,clipPath:'inset(0 32.07% 0 0)',opacity:1},{offset:.55,opacity:1},{offset:.8,clipPath:'inset(0 86.18% 0 0)',opacity:0},{clipPath:'inset(0 85.65% 0 0)',opacity:0}],{...P2,composite:'replace'}));
   // 3) o subtítulo
-  A.push(q('.asa-s').animate([{opacity:0,transform:'translateY(5%)'},{opacity:1,transform:'translateY(0)'}],{duration:R(550),delay:R(3250),fill:'both',easing:'cubic-bezier(.2,.7,.3,1)'}));
+  A.push(q('.asa-s').animate([{opacity:0,transform:'translateY(5%)'},{opacity:1,transform:'translateY(0)'}],{duration:R(550),delay:R(3450),fill:'both',easing:'cubic-bezier(.2,.7,.3,1)'}));
   return A;
 }
 
   const A=run(1);
-  const fim=ov.animate([{opacity:1},{opacity:0}],{duration:450,delay:4150,fill:'both',easing:'ease-in'});A.push(fim);
+  const fim=ov.animate([{opacity:1},{opacity:0}],{duration:450,delay:4350,fill:'both',easing:'ease-in'});A.push(fim);
   const tirar=()=>ov.remove();fim.finished.then(tirar,tirar);setTimeout(tirar,9000);
   const acelerar=()=>{for(const a of A)try{a.playbackRate=6}catch(e){}};
   ov.addEventListener('pointerdown',acelerar);window.addEventListener('keydown',acelerar,{once:true});
