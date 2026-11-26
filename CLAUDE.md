@@ -20,7 +20,7 @@ Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0. A 0.2.0 já tem commit 
 - Sempre diga ao usuário se basta reabrir ou se o exe foi recompilado.
 - O GitHub (`github.com/leof98/asa`, branch `main`) serve só de backup do código: faça commit e push ao fim de cada mudança.
 - **Não crie release** nem fale de release, zip ou repositório público, a não ser que o Asa passe a rodar em outro PC ou em outra pasta. O atualizador continua no código, mas sem release ele não acha nada e fica quieto. Se um dia for preciso: `Empacotar.ps1` gera `Asa-x.y.z.zip`, e a release `vX.Y.Z` leva o zip anexado. O repositório precisa estar público, porque o Asa consulta a API sem login.
-- O usuário não quer explicações longas sobre esse processo. Ele já se confundiu com essa história de release.
+- Ao falar com o usuário sobre atualizar, seja direto: diga só se ele precisa reabrir o Asa. Ele não precisa saber de release.
 
 ---
 
