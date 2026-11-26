@@ -265,7 +265,7 @@ select{font:14px var(--f-body);color:var(--fg);background:var(--bg);border:1px s
 
   <div class="layout">
     <div class="card ctl">
-      <details open><summary>Projeto</summary><div class="in">
+      <details open><summary>Empreendimento</summary><div class="in">
         <select id="proj" aria-label="Projetos salvos neste navegador"></select>
         <div class="pbar">
           <button type="button" class="sec" id="pNew">+ Novo</button>
@@ -1721,7 +1721,7 @@ function drawProjSelect(){
   $('proj').innerHTML=ids.map(id=>`<option value="${id}"${id===LIB.current?' selected':''}>${esc(LIB.list[id].name||'Sem nome')}</option>`).join('');
 }
 function blankProject(){
-  return{name:'Novo projeto',addr:'',date:'',time:'',lat:P.lat,lon:P.lon,W:20,D:36,rot:180,locH:'110, 130',floors:'',fl:NEW_FL(),floorsManual:false,
+  return{name:'Novo empreendimento',addr:'',date:'',time:'',lat:P.lat,lon:P.lon,W:20,D:36,rot:180,locH:'110, 130',floors:'',fl:NEW_FL(),floorsManual:false,
     solo:{where:'perto do tapume, na calçada do terreno e no outro lado da rua do terreno',d:[0.5,5,20],hs:'2, 4'},
     pts:clone(DEF_PTS),ovView:{auto:true},view:{lat:P.lat,lon:P.lon,width:230},locView:{lat:P.lat,lon:P.lon,width:230}};
 }

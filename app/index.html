@@ -42,9 +42,11 @@
 .mono{font-family:Consolas,ui-monospace,monospace;font-size:13px}
 .modelos{display:flex;flex-direction:column;gap:8px;max-width:760px}
 .modelo{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-.modelo b{flex:1}
-.atualiza{display:flex;gap:12px;align-items:center;background:#1e0f2f;border:1px solid #4a1d5c;border-radius:10px;padding:10px 14px;margin-bottom:16px}
-.atualiza span{flex:1}
+.modelo .mnome{flex:1;min-width:0;display:flex;flex-direction:column}
+.modelo .mnome b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modelo .mnome small{color:var(--muted);font-size:12.5px}
+.modelo .mnome input{width:100%;max-width:420px}
+.modelo button{padding:6px 12px;font-size:13px}
 .th.loc{background:#0f0a16}
 .th.loc svg{position:absolute;inset:0;width:100%;height:100%}
 .dlg .cmd{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px}
@@ -70,8 +72,6 @@
 </div>
 
 <main class="pg">
-  <div id="atualiza" class="atualiza" hidden><span id="atuTxt"></span><button type="button" id="atuGo">Atualizar agora</button><button type="button" class="lnk" id="atuDepois">Depois</button></div>
-
   <section data-sec="projetos">
     <div class="bar2">
       <input type="search" id="busca" placeholder="Buscar empreendimento ou endereço" aria-label="Buscar">
@@ -80,11 +80,11 @@
       <button type="button" class="pill" data-f="video" aria-pressed="false">Vídeo</button>
       <button type="button" class="pill" data-f="marcada" aria-pressed="false">Captação marcada</button>
       <span class="sp"></span>
-      <button type="button" class="sec" id="btImportar" title="Traz um projeto exportado do gerador antigo (Exportar cópia de segurança)">Importar</button>
+      <button type="button" class="sec" id="btImportar" title="Traz um plano exportado do gerador antigo (Exportar cópia de segurança)">Importar</button>
       <button type="button" class="sec" id="btPasta">Abrir pasta</button>
       <input type="file" id="arqImportar" accept=".json,.asa,application/json" multiple hidden>
     </div>
-    <p class="sec-t" id="titLista">Projetos</p>
+    <p class="sec-t" id="titLista">Planos de voo</p>
     <div class="grid" id="lista"></div>
   </section>
 
@@ -123,9 +123,8 @@
         <div class="row"><button type="button" class="sec" id="cfgAbrirPasta">Abrir a pasta do Asa</button></div>
       </section>
       <section>
-        <h3>Atualizações</h3>
-        <p>Versão <b id="cfgVersao"></b>. O Asa confere no GitHub, ao abrir, se há uma versão nova.</p>
-        <div class="row"><button type="button" class="sec" id="cfgAtualizar">Verificar agora</button><span id="cfgAtuTxt" style="color:var(--muted);font-size:13.5px"></span></div>
+        <h3>Sobre</h3>
+        <p style="margin:0">Asa · Assistente de Tour, versão <b id="cfgVersao"></b>.</p>
       </section>
     </div>
   </section>

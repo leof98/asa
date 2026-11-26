@@ -167,7 +167,7 @@ hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
 
 <div class="wrap"><div class="layout">
   <div class="card ctl">
-    <p class="sec-t">Projeto</p>
+    <p class="sec-t">Empreendimento</p>
     <div class="pbar">
       <select id="proj" aria-label="Projetos salvos neste navegador"></select>
       <button type="button" class="sec" id="pNew">+ Novo</button>
@@ -177,7 +177,7 @@ hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
 
     <hr><p class="sec-t">Terreno</p>
     <div class="lab" id="fromPlanoBox" hidden>Usar o terreno de um plano de voo
-      <select id="fromPlano"><option value="">Escolha um projeto…</option></select>
+      <select id="fromPlano"><option value="">Escolha um plano de voo…</option></select>
     </div>
     <label class="lab">Endereço<span class="row"><input type="search" id="addr" placeholder="Rua, número, cidade"><button type="button" class="sec" id="addrGo">Buscar</button></span></label>
     <ul class="results" id="addrRes" hidden></ul>
@@ -259,7 +259,7 @@ const KEY='locais.v1',LIBK='locais.projetos';
 let G={key:'',radius:2000,onlyOn:false,chains:null};
 try{Object.assign(G,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 if(!G.key){try{G.key=JSON.parse(localStorage.getItem('planovoo.v1')||'{}').key||''}catch(e){}}  // mesma chave do plano de voo
-const newProject=()=>({name:'Novo projeto',addr:'',lat:null,lon:null,std:'med',cats:Object.fromEntries(CATS.map(c=>[c.id,!!c.on])),places:[]});
+const newProject=()=>({name:'Novo empreendimento',addr:'',lat:null,lon:null,std:'med',cats:Object.fromEntries(CATS.map(c=>[c.id,!!c.on])),places:[]});
 let LIB={cur:null,list:{}};
 try{LIB=Object.assign(LIB,JSON.parse(localStorage.getItem(LIBK)||'{}'))}catch(e){}
 if(!LIB.cur||!LIB.list[LIB.cur]){const id='p'+Date.now();LIB.list[id]=newProject();LIB.cur=id}
@@ -358,7 +358,7 @@ $('addr').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();
   $('fromPlano').innerHTML+=list.map((d,i)=>`<option value="${i}">${esc(d.name||'Sem nome')}</option>`).join('');
   $('fromPlano').addEventListener('change',e=>{
     const d=list[+e.target.value];e.target.value='';if(!d)return;
-    if(!P.places.length&&(P.name==='Novo projeto'||!P.name)){P.name=d.name||P.name;$('name').value=P.name;drawProj()}
+    if(!P.places.length&&(P.name==='Novo empreendimento'||P.name==='Novo projeto'||!P.name)){P.name=d.name||P.name;$('name').value=P.name;drawProj()}
     setOrigin(d.lat,d.lon,d.addr||'');
   });
 })();

@@ -1,8 +1,8 @@
 // Asa: o assistente de tour da Criando Valor (plano de voo de fotos e de vídeo).
 // A janela é nativa (Windows Forms) e mostra as telas da pasta app\ num WebView2, o mesmo motor do Edge que a Central usa.
 // Tudo o que a página não pode fazer sozinha passa por aqui: projetos como arquivos em Documentos\Asa, a chave do Google
-// protegida pelo Windows, o PDF direto (sem a janela de impressão), os downloads salvos na pasta do projeto, os avisos do
-// Windows e a atualização pelo GitHub.
+// protegida pelo Windows, o PDF direto (sem a janela de impressão), os downloads salvos na pasta do empreendimento e os
+// avisos do Windows. O Asa roda direto da pasta do repositório: mudou o código, recompilou, reabriu.
 // C# 5 (compila com o csc do próprio Windows, .NET Framework 4): veja Compilar.cmd.
 using System;
 using System.Collections;
@@ -10,9 +10,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.IO.Compression;
 using System.Net;
-using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -28,8 +26,8 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyProduct("Asa")]
 [assembly: AssemblyDescription("Asa: assistente de tour (plano de voo de fotos e de vídeo)")]
 [assembly: AssemblyCompany("Criando Valor")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.2.1.0")]
+[assembly: AssemblyFileVersion("0.2.1.0")]
 
 static class Programa
 {
@@ -63,7 +61,7 @@ static class Programa
 
 sealed class Janela : Form
 {
-    internal const string Versao = "0.2.0";
+    internal const string Versao = "0.2.1";
     readonly WebView2 web;
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     readonly string pastaApp, pastaDados, pastaAsa, pastaProjetos, pastaModelos, pastaLocais;
@@ -237,6 +235,17 @@ sealed class Janela : Form
                     GravarAtomico(f, Txt(a, "texto"));
                     return Path.GetFileName(f);
                 }
+            case "modelo.renomear":
+                {
+                    // grava com o nome novo e tira o arquivo do nome antigo (sem passar pela Lixeira: é o mesmo modelo)
+                    string velho = Path.Combine(pastaModelos, Path.GetFileName(Txt(a, "arquivo")));
+                    string novo = Path.Combine(pastaModelos, Seguro(Txt(a, "nome")) + ".asa");
+                    bool mesmo = string.Equals(velho, novo, StringComparison.OrdinalIgnoreCase);
+                    if (!mesmo && File.Exists(novo)) throw new Exception("já existe um modelo com esse nome");
+                    GravarAtomico(novo, Txt(a, "texto"));
+                    if (!mesmo && File.Exists(velho)) File.Delete(velho);
+                    return Path.GetFileName(novo);
+                }
             case "modelo.excluir":
                 {
                     string f = Path.Combine(pastaModelos, Path.GetFileName(Txt(a, "arquivo")));
@@ -263,7 +272,6 @@ sealed class Janela : Form
                     return true;
                 }
             case "notificar": Notificar(Txt(a, "titulo"), Txt(a, "texto")); return true;
-            case "atualizar": return await Atualizar(Txt(a, "url"), Txt(a, "versao"));
         }
         throw new Exception("comando desconhecido: " + cmd);
     }
@@ -423,39 +431,6 @@ sealed class Janela : Form
             if (op.State == CoreWebView2DownloadState.Completed) { d["caminho"] = op.ResultFilePath; Evento("baixado", d); }
             else if (op.State == CoreWebView2DownloadState.Interrupted) { d["erro"] = op.InterruptReason.ToString(); Evento("baixado", d); }
         };
-    }
-
-    // ---------------------------------------------------------------------------------------------------------------
-    // Atualização: baixa o .zip da versão nova (GitHub), espera o Asa fechar, copia por cima e abre de novo
-    async Task<object> Atualizar(string url, string versao)
-    {
-        if (string.IsNullOrEmpty(url) || !url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) throw new Exception("endereço inválido");
-        string pasta = Path.Combine(pastaDados, "atualizacao");
-        if (Directory.Exists(pasta)) Directory.Delete(pasta, true);
-        Directory.CreateDirectory(pasta);
-        string zip = Path.Combine(pasta, "asa.zip"), novos = Path.Combine(pasta, "arquivos");
-        using (HttpClient h = new HttpClient())
-        {
-            h.DefaultRequestHeaders.UserAgent.ParseAdd("Asa/" + Versao);
-            byte[] b = await h.GetByteArrayAsync(url);
-            File.WriteAllBytes(zip, b);
-        }
-        ZipFile.ExtractToDirectory(zip, novos);
-        if (!File.Exists(Path.Combine(novos, "Asa.exe"))) throw new Exception("o pacote da versão " + versao + " não tem o Asa.exe");
-        string cmd = Path.Combine(pasta, "atualizar.cmd");
-        int pid = Process.GetCurrentProcess().Id;
-        File.WriteAllText(cmd,
-            "@echo off\r\n" +
-            ":espera\r\n" +
-            "tasklist /fi \"PID eq " + pid + "\" | find \"" + pid + "\" >nul && (timeout /t 1 /nobreak >nul & goto espera)\r\n" +
-            "robocopy \"" + novos + "\" \"" + pastaApp + "\" /E /R:5 /W:1 /NFL /NDL /NJH /NJS >nul\r\n" +
-            "start \"\" \"" + Path.Combine(pastaApp, "Asa.exe") + "\"\r\n", Encoding.Default);
-        ProcessStartInfo si = new ProcessStartInfo("cmd.exe", "/c \"" + cmd + "\"");
-        si.WindowStyle = ProcessWindowStyle.Hidden;
-        si.CreateNoWindow = true;
-        Process.Start(si);
-        BeginInvoke(new Action(delegate { Close(); }));
-        return true;
     }
 
     // ---------------------------------------------------------------------------------------------------------------

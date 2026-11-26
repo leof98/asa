@@ -7,7 +7,7 @@ Este documento passa adiante o projeto Asa para quem for continuar o trabalho (p
 - as decisões tomadas;
 - as preferências do dono.
 
-Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0. A 0.2.0 já tem commit e push em `main`.
+Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0, e atualizado na 0.2.1 (mesmo dia). Tudo tem commit e push em `main`.
 
 ---
 
@@ -19,7 +19,7 @@ Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0. A 0.2.0 já tem commit 
   - mudou `src\Asa.cs`: suba a versão (`Versao` em `src\Asa.cs` e `versao.json`) e recompile com `Compilar.cmd` no Windows. Com o Asa aberto, renomeie antes o exe (`Asa.exe` para `Asa.old.exe`, que o git ignora) e avise o usuário para reabrir.
 - Sempre diga ao usuário se basta reabrir ou se o exe foi recompilado.
 - O GitHub (`github.com/leof98/asa`, branch `main`) serve só de backup do código: faça commit e push ao fim de cada mudança.
-- **Não crie release** nem fale de release, zip ou repositório público, a não ser que o Asa passe a rodar em outro PC ou em outra pasta. O atualizador continua no código, mas sem release ele não acha nada e fica quieto. Se um dia for preciso: `Empacotar.ps1` gera `Asa-x.y.z.zip`, e a release `vX.Y.Z` leva o zip anexado. O repositório precisa estar público, porque o Asa consulta a API sem login.
+- **Não crie release** nem fale de release, zip ou repositório público. A atualização pelo GitHub foi **retirada na 0.2.1** (o comando `atualizar` do host e a checagem na tela inicial). Se um dia o Asa rodar em outro PC, será preciso refazer um atualizador; o `Empacotar.ps1` ainda gera o zip.
 - Ao falar com o usuário sobre atualizar, seja direto: diga só se ele precisa reabrir o Asa. Ele não precisa saber de release.
 
 ---
@@ -74,12 +74,11 @@ O nome é **Asa** e o subtítulo é **Assistente de Tour**. É uma ferramenta de
 | `proj.listar` / `ler` / `gravar` / `excluir` / `duplicar` | arquivos `.asa`; com `pasta:"locais"` usa `Documentos\Asa\Locais`, senão `Documentos\Asa\Projetos`. Gravar com outro nome renomeia o arquivo, a pasta de fotos e a miniatura |
 | `foto.lista` / `gravar` / `ler` | fotos dos takes de vídeo em `<nome>.fotos\<id>.jpg` |
 | `mini.gravar` | miniatura do card em `Projetos\.miniaturas\<nome>.jpg` |
-| `modelo.listar` / `gravar` / `excluir` | modelos em `Documentos\Asa\Modelos` |
+| `modelo.listar` / `gravar` / `renomear` / `excluir` | modelos em `Documentos\Asa\Modelos`. `renomear` grava com o nome novo e apaga o arquivo antigo (sem Lixeira) |
 | `contexto` | define o empreendimento atual (`nome`), que decide para onde vão os downloads. Com `arquivo`, define o nome do próximo download (veja a nota abaixo) |
 | `pdf` | `PrintToPdfAsync` em tamanho Carta, margem 0, com fundos, gravado em `Documentos\Asa\<nome>\<titulo>.pdf` |
 | `pasta.projeto` / `abrir` / `mostrar` | abre pastas e arquivos no Explorer |
 | `notificar` | balão do Windows |
-| `atualizar` | baixa o zip da release, extrai, cria um `.cmd` que espera o PID, faz `robocopy` por cima e reabre o Asa |
 | evento `baixado` | a página recebe `asa:baixado` com `{caminho}` ou `{erro}` |
 
 **Downloads:** o `DownloadStarting` manda tudo (Word, vídeo) para `Documentos\Asa\<nome do empreendimento>\` sem perguntar nada.
@@ -126,7 +125,7 @@ Documentos\Asa\Projetos\<nome>.asa          planos de voo (+ <nome>.fotos\, .min
 Documentos\Asa\Locais\<nome>.asa            listas de locais próximos
 Documentos\Asa\Modelos\<nome>.asa           modelos de plano
 Documentos\Asa\<nome>\                      PDF, Word e vídeos do empreendimento (dos dois)
-%LOCALAPPDATA%\Asa\                         config.json, chave.bin (DPAPI), janela.json, WebView2\, atualizacao\
+%LOCALAPPDATA%\Asa\                         config.json, chave.bin (DPAPI), janela.json, WebView2\
 ```
 Formatos dos arquivos `.asa`:
 - plano: `{"app":"asa","versao":1,"projeto":{...}}`
@@ -149,7 +148,7 @@ Formatos dos arquivos `.asa`:
   ```
 - **Cuidado ao compilar com mono:** as referências `4.8-api` do mono têm sobrecargas que o .NET Framework do Windows não tem, como `string.TrimEnd(char)`. O programa compila, mas no Windows dá "Método não encontrado" na hora de rodar. Isso já aconteceu na 0.2.0 e foi corrigido com `TrimEnd(new char[] { '.' })`. Prefira compilar com o `Compilar.cmd` no Windows. Se usar mono, use as formas com `char[]`.
 - Mudanças só em `app\` não precisam compilar: basta reabrir o Asa.
-- O `Asa.exe` não pode ser sobrescrito com o programa aberto. O Windows deixa *renomear* o exe em uso, então dá para fazer `ren Asa.exe Asa.old.exe` e copiar o novo. O atualizador resolve isso esperando o processo fechar.
+- O `Asa.exe` não pode ser sobrescrito com o programa aberto. O Windows deixa *renomear* o exe em uso: antes de compilar, `ren Asa.exe Asa.old.exe` (o git ignora o `Asa.old.exe`) e depois rode o `Compilar.cmd`. O usuário só precisa reabrir o Asa.
 
 ---
 
@@ -195,8 +194,8 @@ Formatos dos arquivos `.asa`:
   - previsão com aviso no Windows se o dia da captação virar chuva;
   - modelos reutilizáveis;
   - desfazer e refazer;
-  - atualização automática pelo GitHub.
-- **Atualização:** ele criou o repositório justamente para não ter que baixar o exe a cada versão. A atualização tem que acontecer pelo próprio Asa.
+  - atualização automática pelo GitHub (retirada na 0.2.1: o Asa roda da pasta do repositório).
+- **Atualização:** o Asa roda direto da pasta do repositório, e as mudanças valem ao reabrir (veja a seção 1).
 
 ---
 
@@ -207,7 +206,7 @@ Formatos dos arquivos `.asa`:
 4. **Testes:** foram feitos com Playwright, com um host simulado (mock da RPC e do sistema de arquivos em localStorage) e o Google simulado. Esses scripts **não estão no repositório**. Nunca rodou num Windows de verdade além de o usuário abrir a 0.1.0, que abriu normalmente.
 5. **Versão do Locais Próximos:** a que está no Asa é uma versão anterior. Uma versão mais nova, que gerava Word, se perdeu. O Word foi refeito no Asa.
 6. **Word dos Locais:** não inclui as fotos de "Exemplo:" do modelo `Pontos_de_localizacao.docx` do usuário. Inclua se ele pedir.
-7. **Miniatura dos cards de plano:** depende do Cesium renderizar. No teste headless ela não saiu, então confira no Windows.
+7. **Miniatura dos cards de plano:** até a 0.2.0 ela só saía quando o plano era salvo depois de uma mudança, e por isso não aparecia. Na 0.2.1 a `ponte.js` tenta a cada 4 s depois de abrir o plano (a partir de ~12 s) até sair, e de novo ao voltar ao Início. Não deu para testar com o mapa 3D de verdade (precisa da chave): confira no Windows.
 8. **Ideia futura,** que ele mencionou, sem compromisso: mais ferramentas no mesmo programa.
 
 ---

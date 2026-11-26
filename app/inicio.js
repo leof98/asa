@@ -1,7 +1,6 @@
 'use strict';
-// Tela inicial do Asa: planos de voo, locais próximos, modelos, configurações, previsão do tempo e atualização.
+// Tela inicial do Asa: planos de voo, locais próximos, modelos, configurações e previsão do tempo.
 const $=id=>document.getElementById(id);
-const REPO='leof98/asa';
 let INFO={},CFG={},PROJ=[],MOD=[],LOC=[],FILTRO='todos',TIPO='foto',ABA='projetos';
 
 /* ---------- abas ---------- */
@@ -24,7 +23,7 @@ function lerProjeto(r){
 }
 async function carregarProjetos(){
   try{PROJ=(await ASA.chamar('proj.listar')).map(lerProjeto).sort((a,b)=>b.modificado-a.modificado)}
-  catch(e){PROJ=[];aviso('Não consegui ler os projetos: '+e.message,{tipo:'erro'})}
+  catch(e){PROJ=[];aviso('Não consegui ler os planos: '+e.message,{tipo:'erro'})}
   desenharLista();
 }
 const prevKey=p=>`${(+p.lat).toFixed(4)},${(+p.lon).toFixed(4)},${p.iso}`;
@@ -40,13 +39,13 @@ function chipPrev(p){
 function desenharLista(){
   const q=$('busca').value.trim().toLowerCase();
   const l=PROJ.filter(p=>(FILTRO==='todos'||(FILTRO==='marcada'?p.iso>=hojeISO():p.tipo===FILTRO))&&(!q||(p.nome+' '+p.addr).toLowerCase().includes(q)));
-  $('titLista').textContent=PROJ.length?(q||FILTRO!=='todos'?`${l.length} de ${PROJ.length} projetos`:'Recentes'):'Projetos';
+  $('titLista').textContent=PROJ.length?(q||FILTRO!=='todos'?`${l.length} de ${PROJ.length} planos`:'Recentes'):'Planos de voo';
   $('lista').innerHTML=l.map((p,i)=>`<div class="card" role="button" tabindex="0" data-i="${PROJ.indexOf(p)}">
       <div class="th${p.miniatura?'':' vazio'}" ${p.miniatura?`style="background-image:url('${p.miniatura}')"`:''}>${p.miniatura?'':'<img src="asa.svg" alt="">'}<span class="chip tag">${p.tipo==='video'?'Vídeo':'Fotos'}</span></div>
       <button type="button" class="sec mais" data-mais="1" aria-label="Mais opções de ${escH(p.nome)}">⋯</button>
       <div class="in"><b>${escH(p.nome)}</b><div class="meta">${escH(p.addr)||'&nbsp;'}</div><div class="ft">${chipPrev(p)}</div></div>
     </div>`).join('')+`<button type="button" class="novo" id="cardNovo"><div><span>+</span>Novo plano<br><small style="font-weight:400">de fotos ou de vídeo</small></div></button>`;
-  if(!PROJ.length)$('lista').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhum projeto ainda. Crie um plano novo ou importe os que você exportou do gerador antigo.</p>');
+  if(!PROJ.length)$('lista').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhum plano ainda. Crie um plano novo ou importe os que você exportou do gerador antigo.</p>');
 }
 $('busca').addEventListener('input',desenharLista);
 document.querySelector('.bar2').addEventListener('click',e=>{const f=e.target.dataset.f;if(!f)return;FILTRO=f;document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));desenharLista()});
@@ -56,7 +55,7 @@ async function abrirProjeto(p){
     const texto=await ASA.chamar('proj.ler',{arquivo:p.arquivo});
     localStorage.setItem('asa.abrir',JSON.stringify({arquivo:p.arquivo,texto}));
     location.href='gerador.html';
-  }catch(e){aviso('Não consegui abrir o projeto: '+e.message,{tipo:'erro'})}
+  }catch(e){aviso('Não consegui abrir o plano: '+e.message,{tipo:'erro'})}
 }
 let menuAberto=null;
 function fecharMenu(){if(menuAberto){menuAberto.remove();menuAberto=null}}
@@ -68,13 +67,13 @@ $('lista').addEventListener('click',e=>{
   if(e.target.closest('[data-mais]')){
     e.stopPropagation();fecharMenu();
     const m=document.createElement('div');m.className='menu';
-    m.innerHTML=`<button type="button" data-m="abrir">Abrir</button><button type="button" data-m="pasta">Pasta dos arquivos (PDF, Word, vídeos)</button><button type="button" data-m="dup">Duplicar</button><button type="button" data-m="del" class="perigo">Excluir</button>`;
+    m.innerHTML=`<button type="button" data-m="abrir">Abrir</button><button type="button" data-m="pasta">Pasta do empreendimento</button><button type="button" data-m="dup">Duplicar</button><button type="button" data-m="del" class="perigo">Excluir</button>`;
     card.appendChild(m);menuAberto=m;
     m.addEventListener('click',async ev=>{
       ev.stopPropagation();const a=ev.target.dataset.m;if(!a)return;
       if(a==='abrir'){fecharMenu();abrirProjeto(p)}
       if(a==='pasta'){fecharMenu();ASA.chamar('pasta.projeto',{nome:p.nome})}
-      if(a==='dup'){fecharMenu();try{await ASA.chamar('proj.duplicar',{arquivo:p.arquivo,nome:p.nome+' (cópia)'});aviso('Projeto duplicado.');carregarProjetos()}catch(er){aviso('Não consegui duplicar: '+er.message,{tipo:'erro'})}}
+      if(a==='dup'){fecharMenu();try{await ASA.chamar('proj.duplicar',{arquivo:p.arquivo,nome:p.nome+' (cópia)'});aviso('Plano duplicado.');carregarProjetos()}catch(er){aviso('Não consegui duplicar: '+er.message,{tipo:'erro'})}}
       if(a==='del'){
         if(!ev.target.dataset.c){ev.target.dataset.c=1;ev.target.textContent='Confirmar: mandar para a Lixeira';return}
         fecharMenu();try{await ASA.chamar('proj.excluir',{arquivo:p.arquivo});aviso(`"${p.nome}" foi para a Lixeira do Windows.`);carregarProjetos()}catch(er){aviso('Não consegui excluir: '+er.message,{tipo:'erro'})}
@@ -94,19 +93,22 @@ $('arqImportar').addEventListener('change',async e=>{
   for(const f of fs){
     try{
       const j=JSON.parse(await f.text());const d=j.projeto||(j.data&&j.name?j.data:null)||j;
-      if(!d||typeof d!=='object'||!('lat' in d))throw new Error('não é um projeto do plano de voo');
+      if(!d||typeof d!=='object'||!('lat' in d))throw new Error('não é um plano de voo');
       const arquivo=await ASA.chamar('proj.gravar',{arquivo:'',texto:JSON.stringify({app:'asa',versao:1,projeto:d}),nome:d.name||f.name.replace(/\.\w+$/,'')});
       for(const [id,url] of Object.entries(j.fotos||{}))await ASA.chamar('foto.gravar',{arquivo,id,dados:url});
       n++;
     }catch(er){aviso(`${f.name}: ${er.message}`,{tipo:'erro',ms:10000})}
   }
-  if(n){aviso(n===1?'1 projeto importado.':`${n} projetos importados.`);carregarProjetos()}
+  if(n){aviso(n===1?'1 plano importado.':`${n} planos importados.`);carregarProjetos()}
 });
 
 /* ---------- novo plano ---------- */
-async function novoPlano(){
+// comModelo: o arquivo do modelo já escolhido (botão "Novo plano com este modelo" na aba Modelos)
+async function novoPlano(comModelo){
   try{MOD=(await ASA.chamar('modelo.listar')).map(lerModelo)}catch(e){MOD=[]}
-  $('novoNome').value='';TIPO='foto';syncNovo();$('dlgNovo').hidden=false;setTimeout(()=>$('novoNome').focus(),30);
+  const m=comModelo?MOD.find(x=>x.arquivo===comModelo):null;
+  $('novoNome').value='';TIPO=m?m.tipo:'foto';syncNovo();if(m)$('novoModelo').value=String(MOD.indexOf(m));
+  $('dlgNovo').hidden=false;setTimeout(()=>$('novoNome').focus(),30);
 }
 function syncNovo(){
   $('novoTipo').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.t===TIPO));
@@ -118,7 +120,7 @@ $('novoTipo').addEventListener('click',e=>{const t=e.target.dataset.t;if(t){TIPO
 $('novoCancelar').addEventListener('click',()=>$('dlgNovo').hidden=true);
 $('dlgNovo').addEventListener('keydown',e=>{if(e.key==='Escape')$('dlgNovo').hidden=true;if(e.key==='Enter'&&e.target.id==='novoNome')$('novoCriar').click()});
 $('novoCriar').addEventListener('click',()=>{
-  const nome=$('novoNome').value.trim()||'Novo projeto',mi=$('novoModelo').value;
+  const nome=$('novoNome').value.trim()||'Novo empreendimento',mi=$('novoModelo').value;
   localStorage.setItem('asa.abrir',JSON.stringify({novo:true,tipo:TIPO,nome,modelo:mi!==''?MOD[+mi].d:null}));
   location.href='gerador.html';
 });
@@ -184,7 +186,7 @@ $('listaL').addEventListener('click',e=>{
   if(e.target.closest('[data-mais]')){
     e.stopPropagation();fecharMenu();
     const m=document.createElement('div');m.className='menu';
-    m.innerHTML=`<button type="button" data-m="abrir">Abrir</button><button type="button" data-m="pasta">Pasta dos arquivos (PDF, Word)</button><button type="button" data-m="dup">Duplicar</button><button type="button" data-m="del" class="perigo">Excluir</button>`;
+    m.innerHTML=`<button type="button" data-m="abrir">Abrir</button><button type="button" data-m="pasta">Pasta do empreendimento</button><button type="button" data-m="dup">Duplicar</button><button type="button" data-m="del" class="perigo">Excluir</button>`;
     card.appendChild(m);menuAberto=m;
     m.addEventListener('click',async ev=>{
       ev.stopPropagation();const a=ev.target.dataset.m;if(!a)return;
@@ -264,15 +266,45 @@ $('impOk').addEventListener('click',async()=>{
 });
 
 /* ---------- modelos ---------- */
-function lerModelo(r){let d={};try{const j=JSON.parse(r.texto);d=j.projeto||j}catch(e){}return{arquivo:r.arquivo,d,nome:d._modelo||r.arquivo.replace(/\.asa$/,''),tipo:d.kind==='video'?'video':'foto'}}
+function lerModelo(r){let j={},d={};try{j=JSON.parse(r.texto);d=j.projeto||j}catch(e){}return{arquivo:r.arquivo,j,d,nome:d._modelo||r.arquivo.replace(/\.asa$/,''),tipo:d.kind==='video'?'video':'foto'}}
+// o que o modelo traz, em poucas palavras: "4 pontos" ou "3 takes"
+function resumoModelo(m){
+  const n=m.tipo==='video'?((m.d.vid&&m.d.vid.takes)||[]).length:(m.d.pts||[]).length,u=m.tipo==='video'?'take':'ponto';
+  return n?`${n} ${u}${n>1?'s':''}`:(m.tipo==='video'?'sem takes':'sem pontos');
+}
 async function carregarModelos(){
-  try{MOD=(await ASA.chamar('modelo.listar')).map(lerModelo)}catch(e){MOD=[]}
-  $('modelos').innerHTML=MOD.length?MOD.map((m,i)=>`<div class="modelo"><span class="chip">${m.tipo==='video'?'Vídeo':'Fotos'}</span><b>${escH(m.nome)}</b><button type="button" class="sec" data-del="${i}">Excluir</button></div>`).join(''):'<p class="vazio-txt">Nenhum modelo ainda.</p>';
+  try{MOD=(await ASA.chamar('modelo.listar')).map(lerModelo).sort((a,b)=>a.nome.localeCompare(b.nome,'pt'))}catch(e){MOD=[]}
+  $('modelos').innerHTML=MOD.length?MOD.map((m,i)=>`<div class="modelo" data-i="${i}"><span class="chip">${m.tipo==='video'?'Vídeo':'Fotos'}</span>
+      <div class="mnome"><b>${escH(m.nome)}</b><small>${resumoModelo(m)}</small></div>
+      <button type="button" data-m="usar">Novo plano com este modelo</button><button type="button" class="sec" data-m="ren">Renomear</button><button type="button" class="sec" data-m="del">Excluir</button></div>`).join('')
+    :'<p class="vazio-txt">Nenhum modelo ainda.</p>';
+}
+async function renomearModelo(m,linha){
+  const box=linha.querySelector('.mnome'),antes=box.innerHTML;
+  box.innerHTML=`<input type="text" value="${escH(m.nome)}" aria-label="Nome do modelo">`;
+  const inp=box.querySelector('input');inp.focus();inp.select();
+  let feito=false;
+  const salvar=async()=>{
+    if(feito)return;feito=true;
+    const nome=inp.value.trim();
+    if(!nome||nome===m.nome){box.innerHTML=antes;return}
+    const j=JSON.parse(JSON.stringify(m.j));(j.projeto||j)._modelo=nome;
+    try{await ASA.chamar('modelo.renomear',{arquivo:m.arquivo,nome,texto:JSON.stringify(j)});aviso(`Modelo renomeado para "${nome}".`);carregarModelos()}
+    catch(e){aviso('Não consegui renomear: '+e.message,{tipo:'erro'});box.innerHTML=antes}
+  };
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')salvar();if(e.key==='Escape'){feito=true;box.innerHTML=antes}});
+  inp.addEventListener('blur',salvar);
 }
 $('modelos').addEventListener('click',async e=>{
-  const i=e.target.dataset.del;if(i==null)return;
-  if(!e.target.dataset.c){e.target.dataset.c=1;e.target.textContent='Confirmar';return}
-  await ASA.chamar('modelo.excluir',{arquivo:MOD[+i].arquivo});carregarModelos();
+  const b=e.target.closest('[data-m]');if(!b)return;
+  const linha=b.closest('.modelo'),m=MOD[+linha.dataset.i];if(!m)return;
+  if(b.dataset.m==='usar')novoPlano(m.arquivo);
+  if(b.dataset.m==='ren')renomearModelo(m,linha);
+  if(b.dataset.m==='del'){
+    if(!b.dataset.c){b.dataset.c=1;b.textContent='Confirmar: mandar para a Lixeira';return}
+    try{await ASA.chamar('modelo.excluir',{arquivo:m.arquivo});aviso(`Modelo "${m.nome}" foi para a Lixeira do Windows.`);carregarModelos()}
+    catch(er){aviso('Não consegui excluir: '+er.message,{tipo:'erro'})}
+  }
 });
 
 /* ---------- configurações ---------- */
@@ -318,30 +350,6 @@ async function verificarPrevisoes(forcar){
 }
 setInterval(()=>verificarPrevisoes(false),3*3600e3);
 
-/* ---------- atualização pelo GitHub ---------- */
-const nv=v=>String(v||'').replace(/^v/,'').split('.').map(x=>parseInt(x)||0);
-const maior=(a,b)=>{const x=nv(a),y=nv(b);for(let i=0;i<3;i++){if((x[i]||0)!==(y[i]||0))return(x[i]||0)>(y[i]||0)}return false};
-let NOVA=null;
-async function verificarAtualizacao(manual){
-  try{
-    const r=await fetch(`https://api.github.com/repos/${REPO}/releases/latest`,{headers:{Accept:'application/vnd.github+json'}});
-    if(!r.ok)throw new Error(r.status===404?'nenhuma versão publicada ainda':'HTTP '+r.status);
-    const j=await r.json(),zip=(j.assets||[]).find(a=>/\.zip$/i.test(a.name));
-    if(zip&&maior(j.tag_name,INFO.versao)){
-      NOVA={versao:j.tag_name.replace(/^v/,''),url:zip.browser_download_url,notas:j.body||''};
-      $('atuTxt').textContent=`Versão nova do Asa: ${NOVA.versao}${NOVA.notas?' · '+NOVA.notas.split('\n')[0]:''}`;$('atualiza').hidden=false;
-      if(manual)$('cfgAtuTxt').textContent=`Versão ${NOVA.versao} disponível.`;
-    }else if(manual)$('cfgAtuTxt').textContent='Você está na versão mais nova.';
-  }catch(e){if(manual)$('cfgAtuTxt').textContent='Não consegui verificar: '+e.message}
-}
-$('cfgAtualizar').addEventListener('click',()=>verificarAtualizacao(true));
-$('atuDepois').addEventListener('click',()=>$('atualiza').hidden=true);
-$('atuGo').addEventListener('click',async()=>{
-  if(!NOVA)return;$('atuGo').disabled=true;$('atuGo').textContent='Baixando…';
-  try{await ASA.chamar('atualizar',{url:NOVA.url,versao:NOVA.versao})}
-  catch(e){aviso('A atualização falhou: '+e.message,{tipo:'erro'});$('atuGo').disabled=false;$('atuGo').textContent='Atualizar agora'}
-});
-
 /* ---------- início ---------- */
 (async function(){
   if(!ASA.noApp){document.querySelector('main').insertAdjacentHTML('afterbegin','<p class="vazio-txt">Abra pelo Asa.exe.</p>');return}
@@ -357,5 +365,4 @@ $('atuGo').addEventListener('click',async()=>{
   if(!CFG.chave)aba('config');
   else if(['locais','modelos','config'].includes(location.hash.slice(1)))aba(location.hash.slice(1));
   verificarPrevisoes(false);
-  verificarAtualizacao(false);
 })();
