@@ -63,11 +63,11 @@ static class Programa
 
 sealed class Janela : Form
 {
-    internal const string Versao = "0.1.0";
+    internal const string Versao = "0.2.0";
     readonly WebView2 web;
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
-    readonly string pastaApp, pastaDados, pastaAsa, pastaProjetos, pastaModelos;
-    string projetoAtual = "";
+    readonly string pastaApp, pastaDados, pastaAsa, pastaProjetos, pastaModelos, pastaLocais;
+    string projetoAtual = "", proximoArquivo = "";
     NotifyIcon aviso;
 
     public Janela()
@@ -78,7 +78,8 @@ sealed class Janela : Form
         pastaAsa = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Asa");
         pastaProjetos = Path.Combine(pastaAsa, "Projetos");
         pastaModelos = Path.Combine(pastaAsa, "Modelos");
-        foreach (string p in new string[] { pastaDados, pastaProjetos, pastaModelos }) Directory.CreateDirectory(p);
+        pastaLocais = Path.Combine(pastaAsa, "Locais");
+        foreach (string p in new string[] { pastaDados, pastaProjetos, pastaModelos, pastaLocais }) Directory.CreateDirectory(p);
 
         Text = "Asa";
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch (Exception) { }
@@ -181,38 +182,39 @@ sealed class Janela : Form
                     r["versao"] = Versao;
                     r["pastaAsa"] = pastaAsa;
                     r["pastaProjetos"] = pastaProjetos;
+                    r["pastaLocais"] = pastaLocais;
                     r["pastaApp"] = pastaApp;
                     return r;
                 }
             case "config.ler": return LerConfig();
             case "config.gravar": GravarConfig(a); return true;
-            case "proj.listar": return ListarProjetos();
-            case "proj.ler": return File.ReadAllText(Projeto(Txt(a, "arquivo")), Encoding.UTF8);
-            case "proj.gravar": return GravarProjeto(Txt(a, "arquivo"), Txt(a, "texto"), Txt(a, "nome"));
-            case "proj.excluir": ExcluirProjeto(Txt(a, "arquivo")); return true;
-            case "proj.duplicar": return DuplicarProjeto(Txt(a, "arquivo"), Txt(a, "nome"));
+            case "proj.listar": return ListarProjetos(Base(a));
+            case "proj.ler": return File.ReadAllText(Projeto(Base(a), Txt(a, "arquivo")), Encoding.UTF8);
+            case "proj.gravar": return GravarProjeto(Base(a), Txt(a, "arquivo"), Txt(a, "texto"), Txt(a, "nome"));
+            case "proj.excluir": ExcluirProjeto(Base(a), Txt(a, "arquivo")); return true;
+            case "proj.duplicar": return DuplicarProjeto(Base(a), Txt(a, "arquivo"), Txt(a, "nome"));
             case "foto.lista":
                 {
-                    string d = PastaFotos(Txt(a, "arquivo"));
+                    string d = PastaFotos(pastaProjetos, Txt(a, "arquivo"));
                     List<string> ids = new List<string>();
                     if (Directory.Exists(d)) foreach (string f in Directory.GetFiles(d, "*.jpg")) ids.Add(Path.GetFileNameWithoutExtension(f));
                     return ids;
                 }
             case "foto.gravar":
                 {
-                    string d = PastaFotos(Txt(a, "arquivo"));
+                    string d = PastaFotos(pastaProjetos, Txt(a, "arquivo"));
                     Directory.CreateDirectory(d);
                     File.WriteAllBytes(Path.Combine(d, Seguro(Txt(a, "id")) + ".jpg"), DeDataUrl(Txt(a, "dados")));
                     return true;
                 }
             case "foto.ler":
                 {
-                    string f = Path.Combine(PastaFotos(Txt(a, "arquivo")), Seguro(Txt(a, "id")) + ".jpg");
+                    string f = Path.Combine(PastaFotos(pastaProjetos, Txt(a, "arquivo")), Seguro(Txt(a, "id")) + ".jpg");
                     return File.Exists(f) ? "data:image/jpeg;base64," + Convert.ToBase64String(File.ReadAllBytes(f)) : null;
                 }
             case "mini.gravar":
                 {
-                    string f = Miniatura(Txt(a, "arquivo"));
+                    string f = Miniatura(pastaProjetos, Txt(a, "arquivo"));
                     Directory.CreateDirectory(Path.GetDirectoryName(f));
                     File.WriteAllBytes(f, DeDataUrl(Txt(a, "dados")));
                     return true;
@@ -241,7 +243,10 @@ sealed class Janela : Form
                     if (File.Exists(f)) Lixeira(f);
                     return true;
                 }
-            case "contexto": projetoAtual = Txt(a, "nome"); return true;
+            case "contexto":
+                projetoAtual = Txt(a, "nome");
+                if (!string.IsNullOrEmpty(Txt(a, "arquivo"))) proximoArquivo = Txt(a, "arquivo");   // nome com acentos para o próximo arquivo baixado
+                return true;
             case "pdf": return await Pdf(Txt(a, "nome"), Txt(a, "titulo"));
             case "pasta.projeto":
                 {
@@ -301,77 +306,79 @@ sealed class Janela : Form
 
     // ---------------------------------------------------------------------------------------------------------------
     // Projetos: Documentos\Asa\Projetos\<nome>.asa (JSON), as fotos dos takes em <nome>.fotos\ e a miniatura em .miniaturas\
-    string Projeto(string arquivo) { return Path.Combine(pastaProjetos, Path.GetFileName(arquivo)); }
-    string PastaFotos(string arquivo) { return Path.Combine(pastaProjetos, Path.GetFileNameWithoutExtension(arquivo) + ".fotos"); }
-    string Miniatura(string arquivo) { return Path.Combine(pastaProjetos, ".miniaturas", Path.GetFileNameWithoutExtension(arquivo) + ".jpg"); }
+    // Os Locais próximos usam o mesmo esquema, em Documentos\Asa\Locais (pasta:"locais" no comando)
+    string Base(Dictionary<string, object> a) { return Txt(a, "pasta") == "locais" ? pastaLocais : pastaProjetos; }
+    static string Projeto(string b, string arquivo) { return Path.Combine(b, Path.GetFileName(arquivo)); }
+    static string PastaFotos(string b, string arquivo) { return Path.Combine(b, Path.GetFileNameWithoutExtension(arquivo) + ".fotos"); }
+    static string Miniatura(string b, string arquivo) { return Path.Combine(b, ".miniaturas", Path.GetFileNameWithoutExtension(arquivo) + ".jpg"); }
 
-    List<object> ListarProjetos()
+    List<object> ListarProjetos(string b)
     {
         List<object> l = new List<object>();
-        foreach (string f in Directory.GetFiles(pastaProjetos, "*.asa"))
+        foreach (string f in Directory.GetFiles(b, "*.asa"))
         {
             Dictionary<string, object> r = new Dictionary<string, object>();
             r["arquivo"] = Path.GetFileName(f);
             r["modificado"] = (File.GetLastWriteTimeUtc(f) - new DateTime(1970, 1, 1)).TotalMilliseconds;
             try { r["texto"] = File.ReadAllText(f, Encoding.UTF8); } catch (Exception) { continue; }
-            string mini = Miniatura(f);
+            string mini = Miniatura(b, f);
             if (File.Exists(mini)) r["miniatura"] = "data:image/jpeg;base64," + Convert.ToBase64String(File.ReadAllBytes(mini));
             l.Add(r);
         }
         return l;
     }
 
-    string GravarProjeto(string arquivo, string texto, string nome)
+    string GravarProjeto(string b, string arquivo, string texto, string nome)
     {
         string alvo = Seguro(string.IsNullOrEmpty(nome) ? "Sem nome" : nome) + ".asa";
         if (string.IsNullOrEmpty(arquivo))
         {
-            arquivo = Livre(alvo);
+            arquivo = Livre(b, alvo);
         }
-        else if (!string.Equals(Path.GetFileName(arquivo), alvo, StringComparison.OrdinalIgnoreCase) && !File.Exists(Projeto(alvo)))
+        else if (!string.Equals(Path.GetFileName(arquivo), alvo, StringComparison.OrdinalIgnoreCase) && !File.Exists(Projeto(b, alvo)))
         {
             // o nome do empreendimento mudou: o arquivo, as fotos e a miniatura acompanham
-            string velho = Projeto(arquivo);
+            string velho = Projeto(b, arquivo);
             if (File.Exists(velho))
             {
-                File.Move(velho, Projeto(alvo));
-                if (Directory.Exists(PastaFotos(arquivo))) Directory.Move(PastaFotos(arquivo), PastaFotos(alvo));
-                if (File.Exists(Miniatura(arquivo))) File.Move(Miniatura(arquivo), Miniatura(alvo));
+                File.Move(velho, Projeto(b, alvo));
+                if (Directory.Exists(PastaFotos(b, arquivo))) Directory.Move(PastaFotos(b, arquivo), PastaFotos(b, alvo));
+                if (File.Exists(Miniatura(b, arquivo))) File.Move(Miniatura(b, arquivo), Miniatura(b, alvo));
             }
             arquivo = alvo;
         }
-        GravarAtomico(Projeto(arquivo), texto);
+        GravarAtomico(Projeto(b, arquivo), texto);
         return Path.GetFileName(arquivo);
     }
 
-    string Livre(string nome)
+    static string Livre(string b, string nome)
     {
-        string b = Path.GetFileNameWithoutExtension(nome), x = Path.GetExtension(nome), n = nome;
-        for (int i = 2; File.Exists(Projeto(n)); i++) n = b + " (" + i + ")" + x;
+        string r = Path.GetFileNameWithoutExtension(nome), x = Path.GetExtension(nome), n = nome;
+        for (int i = 2; File.Exists(Projeto(b, n)); i++) n = r + " (" + i + ")" + x;
         return n;
     }
 
-    void ExcluirProjeto(string arquivo)
+    void ExcluirProjeto(string b, string arquivo)
     {
-        string f = Projeto(arquivo);
+        string f = Projeto(b, arquivo);
         if (File.Exists(f)) Lixeira(f);
-        if (Directory.Exists(PastaFotos(arquivo))) Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(PastaFotos(arquivo), Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
-        if (File.Exists(Miniatura(arquivo))) File.Delete(Miniatura(arquivo));
+        if (Directory.Exists(PastaFotos(b, arquivo))) Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(PastaFotos(b, arquivo), Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        if (File.Exists(Miniatura(b, arquivo))) File.Delete(Miniatura(b, arquivo));
     }
 
-    string DuplicarProjeto(string arquivo, string nome)
+    string DuplicarProjeto(string b, string arquivo, string nome)
     {
-        Dictionary<string, object> d = json.DeserializeObject(File.ReadAllText(Projeto(arquivo), Encoding.UTF8)) as Dictionary<string, object>;
-        Dictionary<string, object> p = (d != null && d.ContainsKey("projeto") ? d["projeto"] : d) as Dictionary<string, object>;
+        Dictionary<string, object> d = json.DeserializeObject(File.ReadAllText(Projeto(b, arquivo), Encoding.UTF8)) as Dictionary<string, object>;
+        Dictionary<string, object> p = (d != null && d.ContainsKey("projeto") ? d["projeto"] : d != null && d.ContainsKey("locais") ? d["locais"] : d) as Dictionary<string, object>;
         if (p != null) p["name"] = nome;
-        string novo = Livre(Seguro(nome) + ".asa");
-        GravarAtomico(Projeto(novo), json.Serialize(d));
-        if (Directory.Exists(PastaFotos(arquivo)))
+        string novo = Livre(b, Seguro(nome) + ".asa");
+        GravarAtomico(Projeto(b, novo), json.Serialize(d));
+        if (Directory.Exists(PastaFotos(b, arquivo)))
         {
-            Directory.CreateDirectory(PastaFotos(novo));
-            foreach (string f in Directory.GetFiles(PastaFotos(arquivo))) File.Copy(f, Path.Combine(PastaFotos(novo), Path.GetFileName(f)), true);
+            Directory.CreateDirectory(PastaFotos(b, novo));
+            foreach (string f in Directory.GetFiles(PastaFotos(b, arquivo))) File.Copy(f, Path.Combine(PastaFotos(b, novo), Path.GetFileName(f)), true);
         }
-        if (File.Exists(Miniatura(arquivo))) File.Copy(Miniatura(arquivo), Miniatura(novo), true);
+        if (File.Exists(Miniatura(b, arquivo))) File.Copy(Miniatura(b, arquivo), Miniatura(b, novo), true);
         return novo;
     }
 
@@ -403,6 +410,9 @@ sealed class Janela : Form
     {
         // Word, vídeos e o que mais a página baixar vão direto para a pasta do projeto, sem perguntar
         string nome = Path.GetFileName(e.ResultFilePath);
+        if (!string.IsNullOrEmpty(proximoArquivo) && string.Equals(Path.GetExtension(proximoArquivo), Path.GetExtension(nome), StringComparison.OrdinalIgnoreCase))
+            nome = Seguro(proximoArquivo);
+        proximoArquivo = "";
         string destino = Path.Combine(PastaSaida(projetoAtual), nome);
         e.ResultFilePath = destino;
         e.Handled = true;

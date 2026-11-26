@@ -29,7 +29,7 @@ const GRAV=(()=>{
     if(!pronto||this!==localStorage||k!=='planovoo.projetos')return;
     let d;try{const l=JSON.parse(v);d=l.list[l.current].data}catch(e){return}
     const tx=texto(d);if(tx===atual)return;
-    if(!aplicando){U.push(atual);if(U.length>150)U.shift();R.length=0}
+    if(!aplicando&&atual){U.push(atual);if(U.length>150)U.shift();R.length=0}
     atual=tx;pend={tx,nome:d.name};
     clearTimeout(t);t=setTimeout(gravar,600);marcar('Salvando…');
   };
@@ -118,7 +118,7 @@ function barraAsa(){
   const b=document.createElement('div');b.className='asabar';
   b.innerHTML=`<button type="button" class="voltar" id="asaVoltar" title="Voltar à tela inicial">← Início</button>
     <span class="marca"><img src="asa.svg" alt="">ASA</span><span class="sep"></span>
-    <span class="nome"></span><span class="salvo"></span><span class="sp"></span>
+    <span class="ferr">Plano de voo</span><span class="nome"></span><span class="salvo"></span><span class="sp"></span>
     <span class="atalhos" title="Atalhos">Ctrl+Z desfaz · Ctrl+P gera o PDF</span>
     <button type="button" id="asaModelo">Salvar como modelo</button>
     <button type="button" id="asaPasta" title="PDF, Word e vídeos deste plano">Pasta do projeto</button>`;

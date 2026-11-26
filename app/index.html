@@ -45,13 +45,21 @@
 .modelo b{flex:1}
 .atualiza{display:flex;gap:12px;align-items:center;background:#1e0f2f;border:1px solid #4a1d5c;border-radius:10px;padding:10px 14px;margin-bottom:16px}
 .atualiza span{flex:1}
+.th.loc{background:#0f0a16}
+.th.loc svg{position:absolute;inset:0;width:100%;height:100%}
+.dlg .cmd{display:flex;gap:8px;align-items:flex-start;margin:0 0 12px}
+.dlg .cmd code{flex:1;font:12px Consolas,ui-monospace,monospace;background:#08050c;border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all;color:var(--acc2);max-height:92px;overflow:auto}
+.dlg ol{margin:0 0 12px;padding-left:20px;color:var(--muted);font-size:13.5px;line-height:1.5}
+.dlg textarea{width:100%;height:90px;font:12px Consolas,monospace;color:var(--fg);background:#08050c;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical;margin-bottom:6px}
+.dlg .dica{font-size:12.5px;color:var(--muted);margin:-4px 0 12px}
 </style>
 </head>
 <body>
 <div class="asatop">
   <div class="asamarca"><img src="asa.svg" alt="">ASA</div>
   <nav class="asanav" aria-label="Seções">
-    <button type="button" data-aba="projetos" aria-current="page">Projetos</button>
+    <button type="button" data-aba="projetos" aria-current="page">Planos de voo</button>
+    <button type="button" data-aba="locais">Locais próximos</button>
     <button type="button" data-aba="modelos">Modelos</button>
     <button type="button" data-aba="config">Configurações</button>
   </nav>
@@ -80,6 +88,17 @@
     <div class="grid" id="lista"></div>
   </section>
 
+  <section data-sec="locais" hidden>
+    <div class="bar2">
+      <input type="search" id="buscaL" placeholder="Buscar empreendimento ou endereço" aria-label="Buscar nos locais próximos">
+      <span class="sp"></span>
+      <button type="button" class="sec" id="btImportarL" title="Traz as listas que estão no Locais Próximos do navegador">Importar do navegador</button>
+      <button type="button" class="sec" id="btPastaL">Abrir pasta</button>
+    </div>
+    <p class="sec-t" id="titListaL">Locais próximos</p>
+    <div class="grid" id="listaL"></div>
+  </section>
+
   <section data-sec="modelos" hidden>
     <p class="sec-t">Modelos</p>
     <p style="color:var(--muted);margin:0 0 14px;max-width:760px">Um modelo guarda tudo o que se repete num plano (pontos, alturas, takes, textos), sem nome, endereço nem data. Para criar, abra um plano e use <b>Salvar como modelo</b>. Ao fazer um <b>Novo plano</b>, escolha o modelo.</p>
@@ -100,7 +119,7 @@
       </section>
       <section>
         <h3>Pastas</h3>
-        <p>Projetos: <span class="mono" id="cfgPastaProj"></span><br>PDF, Word e vídeos de cada plano: <span class="mono" id="cfgPastaAsa"></span>\&lt;nome do plano&gt;</p>
+        <p>Planos de voo: <span class="mono" id="cfgPastaProj"></span><br>Locais próximos: <span class="mono" id="cfgPastaLoc"></span><br>PDF, Word e vídeos de cada empreendimento: <span class="mono" id="cfgPastaAsa"></span>\&lt;nome&gt;</p>
         <div class="row"><button type="button" class="sec" id="cfgAbrirPasta">Abrir a pasta do Asa</button></div>
       </section>
       <section>
@@ -118,6 +137,27 @@
   <label>Tipo<div class="seg" id="novoTipo"><button type="button" data-t="foto" aria-pressed="true">Fotos 360°</button><button type="button" data-t="video" aria-pressed="false">Vídeo</button></div></label>
   <label>Começar de<select id="novoModelo"></select></label>
   <div class="bt"><button type="button" class="sec" id="novoCancelar">Cancelar</button><button type="button" id="novoCriar">Criar</button></div>
+</div></div>
+
+<div class="dlg" id="dlgLocais" hidden><div role="dialog" aria-modal="true" aria-labelledby="dlgLocaisT">
+  <h3 id="dlgLocaisT">Nova lista de locais próximos</h3>
+  <label>Nome do empreendimento<input type="text" id="locNome" placeholder="ex.: Avenue Park"></label>
+  <label>Terreno<select id="locPlano"></select></label>
+  <p class="dica">Escolhendo um plano de voo, o endereço e a posição do terreno vêm dele. A lista continua separada do plano.</p>
+  <div class="bt"><button type="button" class="sec" id="locCancelar">Cancelar</button><button type="button" id="locCriar">Criar</button></div>
+</div></div>
+
+<div class="dlg" id="dlgImpL" hidden><div role="dialog" aria-modal="true" aria-labelledby="dlgImpLT" style="width:min(560px,94vw)">
+  <h3 id="dlgImpLT">Importar do Locais Próximos do navegador</h3>
+  <ol>
+    <li>Abra o Locais Próximos antigo no navegador, aperte <b>F12</b> e vá na aba <b>Console</b>.</li>
+    <li>Cole o comando abaixo e aperte Enter (ele não leva a chave do Google).</li>
+    <li>Volte aqui, cole no campo (Ctrl+V) e clique em Importar.</li>
+  </ol>
+  <div class="cmd"><code id="impCmd"></code><button type="button" class="sec" id="impCopiar">Copiar</button></div>
+  <textarea id="impTexto" placeholder="Cole aqui o que o comando copiou" spellcheck="false"></textarea>
+  <p class="dica">Vêm todas as listas, os lugares fixos e as redes por padrão.</p>
+  <div class="bt"><button type="button" class="sec" id="impCancelar">Cancelar</button><button type="button" id="impOk">Importar</button></div>
 </div></div>
 
 <script src="comum.js"></script>

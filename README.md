@@ -1,6 +1,11 @@
 # Asa · Assistente de Tour
 
-Programa de Windows para montar o plano de voo de tours virtuais com drone: pontos 360°, alturas, takes de vídeo, previsão do tempo, PDF e Word para a equipe.
+Programa de Windows com duas ferramentas para os tours virtuais com drone:
+
+- **Planos de voo**: pontos 360°, alturas, takes de vídeo, previsão do tempo, PDF e Word para a equipe.
+- **Locais próximos**: mercados, escolas, praias e outros lugares perto do terreno, com o tempo a pé ou de carro, em PDF e Word (Pontos de localização).
+
+As duas ficam em abas separadas na tela inicial. Ao criar uma lista de locais, dá para puxar o terreno de um plano de voo.
 
 ## Como abrir
 
@@ -16,15 +21,17 @@ O Asa usa o Microsoft Edge WebView2, que já vem no Windows 10 e 11.
 2. Para trazer os projetos do gerador antigo (no navegador), faça assim:
    - No gerador antigo, abra cada projeto e use **Exportar cópia de segurança**.
    - No Asa, clique em **Importar** e escolha os arquivos `.json`.
+3. Para trazer as listas do Locais Próximos do navegador, vá na aba **Locais próximos > Importar do navegador** e siga os passos da janela. Vêm as listas, os lugares fixos e as redes por padrão.
 
 ## Onde ficam as coisas
 
 | O quê | Onde |
 |---|---|
-| Projetos (um arquivo `.asa` por plano, com as fotos ao lado) | `Documentos\Asa\Projetos` |
+| Planos de voo (um arquivo `.asa` por plano, com as fotos ao lado) | `Documentos\Asa\Projetos` |
+| Locais próximos (um arquivo `.asa` por empreendimento) | `Documentos\Asa\Locais` |
 | Modelos | `Documentos\Asa\Modelos` |
-| PDF, Word e vídeos de cada plano | `Documentos\Asa\<nome do plano>` |
-| Configurações, chave, posição da janela | `%LOCALAPPDATA%\Asa` |
+| PDF, Word e vídeos de cada empreendimento | `Documentos\Asa\<nome>` |
+| Configurações, chave, lugares fixos, redes por padrão, posição da janela | `%LOCALAPPDATA%\Asa` |
 
 O projeto grava sozinho a cada mudança. Os atalhos de teclado são:
 
@@ -44,6 +51,7 @@ app\                             telas (HTML/JS/CSS)
   index.html, inicio.js          tela inicial: projetos, modelos, configurações
   gerador.html                   o gerador de plano de voo
   ponte.js, ponte.css            liga o gerador ao Asa (arquivos, desfazer, PDF)
+  locais.html, ponte-locais.js   o Locais Próximos e a ligação dele com o Asa
   comum.js, asa.css, abertura.js identidade visual e animação de abertura
 src\Asa.cs                       código do programa (janela, arquivos, PDF, atualização)
 Compilar.cmd                     gera o Asa.exe de novo
