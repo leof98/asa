@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asa</title>
+<link rel="stylesheet" href="asa.css">
+<script src="abertura.js"></script>
+<style>
+.pg{padding:20px 22px 40px;max-width:1500px;margin:0 auto}
+.bar2{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.bar2 input[type=search]{flex:0 1 340px}
+.pill{font-size:13px;font-weight:600;padding:6px 13px;border-radius:999px;border:1px solid var(--line);color:var(--fg);background:transparent}
+.pill[aria-pressed="true"]{border-color:var(--acc);color:var(--acc2)}
+.sec-t{font:700 11.5px "Segoe UI",sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:8px 0 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;cursor:pointer;position:relative;text-align:left;padding:0;color:var(--fg);font-weight:400}
+.card:hover,.card:focus-visible{border-color:var(--acc);filter:none}
+.card .th{height:140px;background:#1b1a1f center/cover no-repeat;position:relative}
+.card .th.vazio{display:grid;place-items:center}
+.card .th.vazio img{width:64px;opacity:.35}
+.card .tag{position:absolute;left:10px;top:10px}
+.card .in{padding:10px 12px 12px}
+.card b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .meta{color:var(--muted);font-size:12.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .ft{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;min-height:28px}
+.card .mais{position:absolute;right:8px;top:8px;padding:3px 9px;background:rgba(8,5,12,.75);border:1px solid var(--line);font-size:15px;line-height:1}
+.menu{position:absolute;right:8px;top:40px;background:#1b1226;border:1px solid #3a2a50;border-radius:10px;padding:5px;display:flex;flex-direction:column;z-index:20;min-width:190px;box-shadow:0 14px 40px rgba(0,0,0,.5)}
+.menu button{background:none;border:0;text-align:left;color:var(--fg);font-weight:500;padding:8px 10px;border-radius:6px}
+.menu button:hover{background:var(--panel2);filter:none}
+.menu button.perigo{color:#ff9a8f}
+.novo{display:grid;place-items:center;border:1px dashed #3a2a50;border-radius:12px;color:var(--muted);min-height:236px;font-weight:600;background:transparent}
+.novo:hover{border-color:var(--acc);color:var(--fg);filter:none}
+.novo span{color:var(--acc2);font-size:30px;display:block;text-align:center;line-height:1}
+.vazio-txt{color:var(--muted);padding:30px 0}
+.cfg{max-width:760px;display:flex;flex-direction:column;gap:18px}
+.cfg section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.cfg h3{margin:0 0 10px;font-size:15px}
+.cfg p{margin:0 0 10px;color:var(--muted);font-size:13.5px}
+.cfg .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cfg .row input[type=password],.cfg .row input[type=text]{flex:1;min-width:240px}
+.mono{font-family:Consolas,ui-monospace,monospace;font-size:13px}
+.modelos{display:flex;flex-direction:column;gap:8px;max-width:760px}
+.modelo{display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+.modelo b{flex:1}
+.atualiza{display:flex;gap:12px;align-items:center;background:#1e0f2f;border:1px solid #4a1d5c;border-radius:10px;padding:10px 14px;margin-bottom:16px}
+.atualiza span{flex:1}
+</style>
+</head>
+<body>
+<div class="asatop">
+  <div class="asamarca"><img src="asa.svg" alt="">ASA</div>
+  <nav class="asanav" aria-label="Seções">
+    <button type="button" data-aba="projetos" aria-current="page">Projetos</button>
+    <button type="button" data-aba="modelos">Modelos</button>
+    <button type="button" data-aba="config">Configurações</button>
+  </nav>
+  <span class="sp"></span>
+  <span class="chip" id="chGoogle"><i class="dot g"></i>Google</span>
+  <span class="chip" id="chPrev" hidden><i class="dot"></i>Previsão</span>
+  <button type="button" id="btNovo">+ Novo plano</button>
+</div>
+
+<main class="pg">
+  <div id="atualiza" class="atualiza" hidden><span id="atuTxt"></span><button type="button" id="atuGo">Atualizar agora</button><button type="button" class="lnk" id="atuDepois">Depois</button></div>
+
+  <section data-sec="projetos">
+    <div class="bar2">
+      <input type="search" id="busca" placeholder="Buscar empreendimento ou endereço" aria-label="Buscar">
+      <button type="button" class="pill" data-f="todos" aria-pressed="true">Todos</button>
+      <button type="button" class="pill" data-f="foto" aria-pressed="false">Fotos</button>
+      <button type="button" class="pill" data-f="video" aria-pressed="false">Vídeo</button>
+      <button type="button" class="pill" data-f="marcada" aria-pressed="false">Captação marcada</button>
+      <span class="sp"></span>
+      <button type="button" class="sec" id="btImportar" title="Traz um projeto exportado do gerador antigo (Exportar cópia de segurança)">Importar</button>
+      <button type="button" class="sec" id="btPasta">Abrir pasta</button>
+      <input type="file" id="arqImportar" accept=".json,.asa,application/json" multiple hidden>
+    </div>
+    <p class="sec-t" id="titLista">Projetos</p>
+    <div class="grid" id="lista"></div>
+  </section>
+
+  <section data-sec="modelos" hidden>
+    <p class="sec-t">Modelos</p>
+    <p style="color:var(--muted);margin:0 0 14px;max-width:760px">Um modelo guarda tudo o que se repete num plano (pontos, alturas, takes, textos), sem nome, endereço nem data. Para criar, abra um plano e use <b>Salvar como modelo</b>. Ao fazer um <b>Novo plano</b>, escolha o modelo.</p>
+    <div class="modelos" id="modelos"></div>
+  </section>
+
+  <section data-sec="config" hidden>
+    <div class="cfg">
+      <section>
+        <h3>Chave do Google</h3>
+        <p>Usada no mapa 3D, na previsão do tempo e no simulador. Fica guardada protegida pelo Windows, só para o seu usuário.</p>
+        <div class="row"><input type="password" id="cfgChave" class="mono" placeholder="Cole aqui a chave de API" autocomplete="off"><button type="button" class="sec" id="cfgVer">Mostrar</button><button type="button" id="cfgSalvarChave">Salvar</button></div>
+      </section>
+      <section>
+        <h3>Previsão do tempo</h3>
+        <p>Ao abrir o Asa e a cada 3 horas, ele confere a previsão dos planos com captação marcada nos próximos 10 dias e avisa no Windows se o dia virar chuva.</p>
+        <label class="row" style="color:var(--fg);font-size:14px"><input type="checkbox" id="cfgAvisos"> Avisar quando o dia da captação virar chuva</label>
+      </section>
+      <section>
+        <h3>Pastas</h3>
+        <p>Projetos: <span class="mono" id="cfgPastaProj"></span><br>PDF, Word e vídeos de cada plano: <span class="mono" id="cfgPastaAsa"></span>\&lt;nome do plano&gt;</p>
+        <div class="row"><button type="button" class="sec" id="cfgAbrirPasta">Abrir a pasta do Asa</button></div>
+      </section>
+      <section>
+        <h3>Atualizações</h3>
+        <p>Versão <b id="cfgVersao"></b>. O Asa confere no GitHub, ao abrir, se há uma versão nova.</p>
+        <div class="row"><button type="button" class="sec" id="cfgAtualizar">Verificar agora</button><span id="cfgAtuTxt" style="color:var(--muted);font-size:13.5px"></span></div>
+      </section>
+    </div>
+  </section>
+</main>
+
+<div class="dlg" id="dlgNovo" hidden><div role="dialog" aria-modal="true" aria-labelledby="dlgNovoT">
+  <h3 id="dlgNovoT">Novo plano</h3>
+  <label>Nome do empreendimento<input type="text" id="novoNome" placeholder="ex.: Avenue Park"></label>
+  <label>Tipo<div class="seg" id="novoTipo"><button type="button" data-t="foto" aria-pressed="true">Fotos 360°</button><button type="button" data-t="video" aria-pressed="false">Vídeo</button></div></label>
+  <label>Começar de<select id="novoModelo"></select></label>
+  <div class="bt"><button type="button" class="sec" id="novoCancelar">Cancelar</button><button type="button" id="novoCriar">Criar</button></div>
+</div></div>
+
+<script src="comum.js"></script>
+<script src="inicio.js"></script>
+</body>
+</html>
