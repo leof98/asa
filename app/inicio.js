@@ -18,7 +18,7 @@ document.querySelector('.asanav').addEventListener('click',e=>{const a=e.target.
 /* ---------- projetos ---------- */
 function lerProjeto(r){
   let d={};try{const j=JSON.parse(r.texto);d=j.projeto||j}catch(e){}
-  return{arquivo:r.arquivo,modificado:r.modificado,miniatura:r.miniatura||null,d,
+  return{arquivo:r.arquivo,modificado:r.modificado,d,
     nome:d.name||r.arquivo.replace(/\.asa$/,''),tipo:d.kind==='video'?'video':'foto',addr:d.addr||'',iso:d.dateISO||'',data:d.date||'',lat:d.lat,lon:d.lon,wx:d.wxCfg};
 }
 async function carregarProjetos(){
@@ -41,7 +41,7 @@ function desenharLista(){
   const l=PROJ.filter(p=>(FILTRO==='todos'||(FILTRO==='marcada'?p.iso>=hojeISO():p.tipo===FILTRO))&&(!q||(p.nome+' '+p.addr).toLowerCase().includes(q)));
   $('titLista').textContent=PROJ.length?(q||FILTRO!=='todos'?`${l.length} de ${PROJ.length} planos`:'Recentes'):'Planos de voo';
   $('lista').innerHTML=l.map((p,i)=>`<div class="card" role="button" tabindex="0" data-i="${PROJ.indexOf(p)}">
-      <div class="th${p.miniatura?'':' vazio'}" ${p.miniatura?`style="background-image:url('${p.miniatura}')"`:''}>${p.miniatura?'':'<img src="asa.svg" alt="">'}<span class="chip tag">${p.tipo==='video'?'Vídeo':'Fotos'}</span></div>
+      <div class="th vazio"><img src="asa.svg" alt=""><span class="chip tag">${p.tipo==='video'?'Vídeo':'Fotos'}</span></div>
       <button type="button" class="sec mais" data-mais="1" aria-label="Mais opções de ${escH(p.nome)}">⋯</button>
       <div class="in"><b>${escH(p.nome)}</b><div class="meta">${escH(p.addr)||'&nbsp;'}</div><div class="ft">${chipPrev(p)}</div></div>
     </div>`).join('')+`<button type="button" class="novo" id="cardNovo"><div><span>+</span>Novo plano<br><small style="font-weight:400">de fotos ou de vídeo</small></div></button>`;

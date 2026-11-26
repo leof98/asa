@@ -41,7 +41,7 @@ const GRAV=(()=>{
       setOrig.call(localStorage,'asa.abrir',JSON.stringify({arquivo:arq,texto:p.tx}));
       ASA.chamar('contexto',{nome:p.nome}).catch(()=>{});
       const h=new Date();marcar(`Salvo às ${String(h.getHours()).padStart(2,'0')}:${String(h.getMinutes()).padStart(2,'0')}`);
-      sincronizarFotos().catch(()=>{});miniatura().catch(()=>{});
+      sincronizarFotos().catch(()=>{});
     }catch(e){marcar('Não salvou: '+e.message,true);pend=pend||p}
     finally{gravando=false;if(pend){clearTimeout(t);t=setTimeout(gravar,300)}}
   }
@@ -90,19 +90,6 @@ async function restaurarFotos(){
   if(n){await loadImgs();drawTakes();renderPages();scheduleDraw()}
 }
 
-/* ---------- miniatura para a tela inicial ---------- */
-// sai quando o mapa já tem uma vista pronta: ao abrir o plano (sem precisar mudar nada), a cada gravação e ao voltar ao início
-let MINI_T=0;
-async function miniatura(forcar){
-  if((!forcar&&Date.now()-MINI_T<20000)||!ASA_PROJ.arquivo)return;
-  const pref=isVid()?[...P.vid.takes.filter(t=>t.map).map(t=>'k'+t.id),'sim']:['solo','loc','ov','sim'];
-  const k=pref.find(k=>SHOTS[k]&&SHOTS[k].img&&SHOTS[k].img.complete);if(!k)return;
-  MINI_T=Date.now();
-  const v=viewFor(k),kind=viewKind(k),W=480,H=Math.round(W/v.aspect),cv=document.createElement('canvas');cv.width=W;cv.height=H;
-  composeMap(cv,W,H,SHOTS[k].img,v,kind,kind==='pt'?+k.slice(1):kind==='take'?takeIdx(k):0);
-  await ASA.chamar('mini.gravar',{arquivo:ASA_PROJ.arquivo,dados:cv.toDataURL('image/jpeg',.82)});
-}
-
 /* ---------- PDF direto e arquivos baixados ---------- */
 window.ASA_PDF=async()=>{
   try{const c=await ASA.chamar('pdf',{nome:P.name,titulo:`Plano de Voo - ${P.name||'projeto'}`});avisoArquivo('PDF',c)}
@@ -124,7 +111,7 @@ function barraAsa(){
     <button type="button" id="asaModelo">Salvar como modelo</button>
     <button type="button" id="asaPasta" title="PDF, Word e vídeos deste empreendimento">Pasta do empreendimento</button>`;
   document.body.prepend(b);
-  b.querySelector('#asaVoltar').onclick=async()=>{await GRAV.agora();await miniatura(true).catch(()=>{});location.href='index.html'};
+  b.querySelector('#asaVoltar').onclick=async()=>{await GRAV.agora();location.href='index.html'};
   b.querySelector('#asaPasta').onclick=()=>ASA.chamar('pasta.projeto',{nome:P.name});
   b.querySelector('#asaModelo').onclick=salvarModelo;
 }
@@ -177,8 +164,6 @@ window.addEventListener('DOMContentLoaded',()=>{
     restaurarFotos().catch(()=>{});
   }
   ASA.chamar('contexto',{nome:P.name}).catch(()=>{});
-  // a primeira miniatura: tenta até o mapa ter uma vista pronta (o 3D leva alguns segundos para carregar)
-  let tentativas=0;const tm=setInterval(()=>{if(MINI_T||++tentativas>30){clearInterval(tm);return}if(tentativas>=3)miniatura(true).catch(()=>{})},4000);
   document.title=(P.name?P.name+' · ':'')+'Asa';
   const pdf=document.getElementById('pdf');if(pdf)pdf.title='Salva o PDF na pasta do empreendimento (Ctrl+P)';
 });

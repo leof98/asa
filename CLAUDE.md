@@ -101,7 +101,7 @@ O WebView2 não aceita acentos no atributo `download`: o arquivo sai como "downl
 - monta a lista de projetos do gerador só com o projeto aberto, a partir de `localStorage['asa.abrir']`;
 - intercepta `Storage.prototype.setItem` na chave `planovoo.projetos` e grava em arquivo, com 600 ms de espera;
 - mantém o desfazer e refazer;
-- sincroniza as fotos com o IndexedDB e grava a miniatura a cada 20 s;
+- sincroniza as fotos com o IndexedDB;
 - gera o PDF direto (`ASA_PDF`);
 - monta a barra do Asa e os atalhos;
 - faz "Salvar como modelo".
@@ -206,7 +206,7 @@ Formatos dos arquivos `.asa`:
 4. **Testes:** foram feitos com Playwright, com um host simulado (mock da RPC e do sistema de arquivos em localStorage) e o Google simulado. Esses scripts **não estão no repositório**. Nunca rodou num Windows de verdade além de o usuário abrir a 0.1.0, que abriu normalmente.
 5. **Versão do Locais Próximos:** a que está no Asa é uma versão anterior. Uma versão mais nova, que gerava Word, se perdeu. O Word foi refeito no Asa.
 6. **Word dos Locais:** não inclui as fotos de "Exemplo:" do modelo `Pontos_de_localizacao.docx` do usuário. Inclua se ele pedir.
-7. **Miniatura dos cards de plano:** até a 0.2.0 ela só saía quando o plano era salvo depois de uma mudança, e por isso não aparecia. Na 0.2.1 a `ponte.js` tenta a cada 4 s depois de abrir o plano (a partir de ~12 s) até sair, e de novo ao voltar ao Início. Não deu para testar com o mapa 3D de verdade (precisa da chave): confira no Windows.
+7. **Miniatura dos cards de plano:** decisão do usuário (26/11/2026): os cartões dos planos mostram **sempre o logo da asa**, sem miniatura do mapa. A geração de miniatura saiu da `ponte.js`, e a tela inicial ignora as que já existem. O comando `mini.gravar` continua no host, sem uso.
 8. **Ideia futura,** que ele mencionou, sem compromisso: mais ferramentas no mesmo programa.
 
 ---
