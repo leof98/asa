@@ -7,36 +7,20 @@ Este documento passa adiante o projeto Asa para quem for continuar o trabalho (p
 - as decisões tomadas;
 - as preferências do dono.
 
-Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0.
+Tudo foi escrito em 26/11/2026, ao fim da versão 0.2.0. A 0.2.0 já tem commit e push em `main`.
 
 ---
 
-## 1. Próximo passo imediato
+## 1. Como as mudanças chegam ao Asa (decidido em 26/11/2026)
 
-A tarefa que motivou este documento é **publicar a versão 0.2.0 no GitHub para que o Asa passe a se atualizar sozinho**.
-
-- O repositório é `github.com/leof98/asa`, branch `main`. Até aqui nada foi publicado: nem commit com estes arquivos, nem release.
-- A pasta de trabalho local é `E:\Projetos\pessoal\asa`, no PC do usuário. Ela é um clone do repositório e já contém a versão 0.2.0 completa, inclusive o `Asa.exe` 0.2.0 já compilado.
-- O Asa roda direto dessa pasta.
-
-Passos:
-
-1. Fazer o commit de tudo e dar push em `main`. A mensagem pode ser "Asa 0.2.0: planos de voo + locais próximos".
-2. **Deixar o repositório público.** O Asa consulta `https://api.github.com/repos/leof98/asa/releases/latest` sem autenticação, e num repositório privado essa consulta devolve 404. Confirme com o usuário antes de tornar o repositório público. Se ele quiser manter privado, o atualizador precisa mudar (veja a seção 7).
-3. Gerar o pacote rodando `Empacotar.ps1` no Windows. Ele cria `Asa-0.2.0.zip`, com os arquivos na raiz do zip: `Asa.exe`, `asa.ico`, `versao.json`, as 3 DLLs do WebView2 e a pasta `app\`.
-4. Criar a release com tag `v0.2.0` e anexar o `.zip`. Pelo `gh`:
-   ```
-   gh release create v0.2.0 Asa-0.2.0.zip -t "Asa 0.2.0" -n "Locais próximos dentro do Asa; Word dos locais; desfazer nos locais."
-   ```
-5. Nas próximas versões, repetir o ciclo:
-   - subir a versão em `src\Asa.cs` (`Versao = "x.y.z"`) e em `versao.json`;
-   - rodar `Compilar.cmd`;
-   - rodar `Empacotar.ps1`;
-   - criar a release `vX.Y.Z` com o zip.
-
-   O Asa compara `tag_name` com a própria versão, oferece "Atualizar agora" e se atualiza sozinho.
-
-O `.gitignore` já ignora `Asa-*.zip` e `*.gravando`.
+- O Asa roda **só no PC do usuário, direto da pasta do repositório**, `E:\Projetos\pessoalsa`. O Claude trabalha nessa mesma pasta.
+- Por isso **não se usa release nem atualização pelo GitHub**. A mudança vale assim que é feita:
+  - mudou só `app\`: o usuário fecha e abre o Asa;
+  - mudou `src\Asa.cs`: suba a versão (`Versao` em `src\Asa.cs` e `versao.json`) e recompile com `Compilar.cmd` no Windows. Com o Asa aberto, renomeie antes o exe (`Asa.exe` para `Asa.old.exe`, que o git ignora) e avise o usuário para reabrir.
+- Sempre diga ao usuário se basta reabrir ou se o exe foi recompilado.
+- O GitHub (`github.com/leof98/asa`, branch `main`) serve só de backup do código: faça commit e push ao fim de cada mudança.
+- **Não crie release** nem fale de release, zip ou repositório público, a não ser que o Asa passe a rodar em outro PC ou em outra pasta. O atualizador continua no código, mas sem release ele não acha nada e fica quieto. Se um dia for preciso: `Empacotar.ps1` gera `Asa-x.y.z.zip`, e a release `vX.Y.Z` leva o zip anexado. O repositório precisa estar público, porque o Asa consulta a API sem login.
+- O usuário não quer explicações longas sobre esse processo. Ele já se confundiu com essa história de release.
 
 ---
 
@@ -218,8 +202,7 @@ Formatos dos arquivos `.asa`:
 
 ## 7. Pendências e pontos de atenção
 
-1. **Publicar a 0.2.0** (seção 1). Sem release publicada, o atualizador não tem o que baixar.
-2. **Repositório privado:** se ele não quiser deixar público, mude o atualizador. Uma opção é ler `versao.json` e baixar o zip do branch `main`, ou da release, com um token guardado por DPAPI. Lembre que o zip do branch vem dentro de uma pasta `asa-main/`.
+1. **Atualização pelo GitHub fora de uso** (seção 1). Se um dia voltar a ser usada com o repositório privado, o atualizador precisará de um token guardado por DPAPI.
 3. **Sem assinatura digital:** o SmartScreen avisa na primeira abertura. O usuário clica em "Mais informações > Executar assim mesmo".
 4. **Testes:** foram feitos com Playwright, com um host simulado (mock da RPC e do sistema de arquivos em localStorage) e o Google simulado. Esses scripts **não estão no repositório**. Nunca rodou num Windows de verdade além de o usuário abrir a 0.1.0, que abriu normalmente.
 5. **Versão do Locais Próximos:** a que está no Asa é uma versão anterior. Uma versão mais nova, que gerava Word, se perdeu. O Word foi refeito no Asa.
