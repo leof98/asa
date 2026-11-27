@@ -32,3 +32,27 @@
 .asadlg button{font:700 13.5px "Segoe UI",sans-serif;background:#b518d6;color:#fff;border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
 .asadlg button.sec{background:#08050c;border:1px solid #2a1f38;font-weight:600}
 @media print{.asabar,#asa-avisos,.asadlg,.asamenu{display:none!important}}
+/* leitura do PDF de cortes (cortes.js) */
+.ctrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.ctdlg>div{width:min(760px,94vw);max-height:92vh;display:flex;flex-direction:column}
+.ctdlg .ctaj{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px}
+.ctdlg .ctaj label{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:#cfc4dd}
+.ctdlg .ctaj small{color:#9d91ae}
+.ctdlg .ctaj input{width:150px;margin:0}
+.ctdlg .ctolho{font-size:12.5px;color:#9d91ae;padding-bottom:8px}
+.ctdlg .cttab{flex:1;min-height:120px;overflow:auto;border:1px solid #2a1f38;border-radius:10px;margin-bottom:12px}
+.ctdlg table{width:100%;border-collapse:collapse;font-size:13px}
+.ctdlg th{position:sticky;top:0;background:#1a1224;color:#9d91ae;font-weight:600;text-align:left;padding:7px 8px;font-size:12px}
+.ctdlg td{padding:3px 8px;border-top:1px solid #21182e}
+.ctdlg .n{text-align:right}
+.ctdlg td input[type=text]{margin:0;padding:5px 8px;font-size:13px}
+.ctdlg td.n input{text-align:right;width:110px}
+.ctdlg td input[type=checkbox]{width:auto;margin:0;accent-color:#b518d6}
+.ctdlg .ctf{font-weight:700;color:#ee84d6;width:70px}
+.ctdlg tr.fora td{opacity:.45}
+.ctdlg tr.salto td{background:rgba(255,200,60,.12)}
+.ctdlg tr.salto td.n input{border-color:#c9a23a}
+.ctdlg .ctx{padding:3px 9px}
+.ctdlg .ctcola{margin-bottom:12px}
+.ctdlg .ctcola textarea{width:100%;font:13px Consolas,monospace;color:#f3eef8;background:#08050c;border:1px solid #2a1f38;border-radius:8px;padding:8px;margin-bottom:8px;resize:vertical}
+.ctdlg button:disabled{opacity:.5;cursor:default}

@@ -95,6 +95,7 @@ O WebView2 não aceita acentos no atributo `download`: o arquivo sai como "downl
 | `ponte.js` + `ponte.css` | ligação do gerador com o Asa (detalhes abaixo) |
 | `locais.html` | o Locais Próximos, com ajustes para o Asa e botão Word |
 | `ponte-locais.js` | a ponte dos Locais (detalhes abaixo) |
+| `cortes.js` | lê o PDF de cortes da construtora **sem IA** (pdf.js local em `app\pdfjs\`, pareamento rótulo↔cota portado do `gerador-plano-voo/lib/parsePdf.ts`) e abre a revisão: RN, referência do corte, +1,60 m; o resultado vai para a lista manual da Vista dos andares (`P.floors`). Também aceita uma lista colada "Pavimento: cota". Grava `P.cortesRN`/`P.cortesRef` |
 | `asa.svg`, `icone.svg` | a marca (o V do logo da Criando Valor, usado como asa) |
 
 **O que a `ponte.js` faz no gerador:**

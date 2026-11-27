@@ -525,7 +525,7 @@ if(P.cur==='terreno')P.cur='loc';
 if(!Array.isArray(P.pts))P.pts=JSON.parse(JSON.stringify(DEF_PTS));
 /* ---------- projetos ---------- */
 const LIBKEY='planovoo.projetos';
-const PFIELDS=['kind','vid','showB','fl','floorsManual','sun','monSent','dateISO','sim','bH','wx','name','addr','date','time','drone','torres','lat','lon','W','D','rot','locH','floors','solo','pts','ovView','view','locView'];
+const PFIELDS=['kind','vid','showB','fl','floorsManual','sun','monSent','dateISO','sim','bH','wx','name','addr','date','time','drone','torres','lat','lon','W','D','rot','locH','floors','cortesRN','cortesRef','solo','pts','ovView','view','locView'];
 const clone=o=>JSON.parse(JSON.stringify(o));
 const pick=()=>{const d={};for(const k of PFIELDS)if(P[k]!==undefined)d[k]=clone(P[k]);return d};
 let LIB={list:{},current:null};
@@ -2007,5 +2007,6 @@ if(P.key)connect();
 draw();renderPagesNow();
 new ResizeObserver(()=>{scheduleDraw();fitPreview()}).observe(document.body);
 </script>
+<script src="cortes.js"></script>
 </body>
 </html>
