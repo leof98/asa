@@ -206,19 +206,19 @@ function aplicar(){
   if(!usados.length)return;
   P.cortesRN=numBR(AJ.rn)||0;P.cortesRef=numBR(AJ.ref)||0;
   P.floors=usados.map(r=>`${r.nome.trim()}: ${foto(r.cota)}`).join('\n');
-  P.floorsManual=true;drawBlocks();$('floors').value=P.floors;
+  P.floorsManual=true;drawBlocks();
   bDirty=true;save();renderPages();scheduleDraw();fechar();
   if(window.aviso)aviso(`${usados.length} andares na Vista dos andares. Dá para ajustar na lista.`);
 }
 
 /* ---------- botões na seção Vista dos andares ---------- */
 function montar(){
-  const box=$('blkMode');if(!box||$('ctLer'))return;
+  const box=$('flConta');if(!box||$('ctLer'))return;
   const row=document.createElement('div');row.className='ctrow';
   row.innerHTML=`<button type="button" class="sec" id="ctLer" title="Lê os pavimentos e as cotas do PDF de cortes da construtora, sem IA e sem internet">Ler PDF de cortes…</button>
     <button type="button" class="sec" id="ctAbrirCola" title="Cola uma lista de pavimentos com a cota do corte">Colar lista do corte…</button>
     <input type="file" id="ctArq" accept="application/pdf,.pdf" hidden>`;
-  box.parentElement.insertBefore(row,box.parentElement.firstChild);
+  box.parentElement.insertBefore(row,box);
   $('ctLer').onclick=()=>$('ctArq').click();
   $('ctAbrirCola').onclick=()=>abrir([],'');
   $('ctArq').addEventListener('change',async e=>{

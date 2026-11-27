@@ -365,21 +365,9 @@ select{font:14px var(--f-body);color:var(--fg);background:var(--bg);border:1px s
       </div></details>
 
       <details class="fonly"><summary>Vista dos andares</summary><div class="in">
-        <div id="blkBox" class="flf">
-          <p class="flt">Térreo</p>
-          <label class="flr"><span>Corte</span><input type="number" step="0.01" data-f="terreoC"></label>
-          <p class="flt">Andares tipo</p>
-          <label class="flr"><span>Quantos andares</span><input type="number" step="1" min="0" data-f="tipoQ"></label>
-          <label class="flr"><span>Corte do 1º andar</span><input type="number" step="0.01" data-f="tipoC"></label>
-          <label class="flr"><span>Pé-direito</span><input type="number" step="0.01" min="0" data-f="tipoPD"></label>
-          <p class="flt">Cobertura</p>
-          <label class="flr"><span>Corte</span><input type="number" step="0.01" data-f="cobC"></label>
-          <div id="flx"></div>
-          <button type="button" class="sec" id="flxAdd">+ pavimento extra (garagem, lazer…)</button>
-        </div>
+        <p class="small" id="flConta" style="margin:2px 0 0"></p>
         <label class="lab" id="floorsBox">Pavimentos (Nome: altura da foto)
-          <textarea id="floors" rows="9" spellcheck="false"></textarea></label>
-        <button type="button" class="sec" id="blkMode"></button>
+          <textarea id="floors" rows="9" spellcheck="false" placeholder="Use Ler PDF de cortes ou Colar lista do corte"></textarea></label>
       </div></details>
 
       <details class="fonly"><summary>Vista do solo</summary><div class="in">
@@ -604,29 +592,14 @@ function applyBlocks(){
   const fl=floorsFromForm();
   P.floors=fl.map(f=>`${f.n}: ${f.h}`).join('\n');$('floors').value=P.floors;
 }
+function contaAndares(){const n=parseFloors(P.floors).length;$('flConta').textContent=n?`${n} ${n===1?'andar':'andares'} na lista`:'Nenhum andar ainda: leia o PDF de cortes ou cole a lista.'}
 function drawBlocks(){
   migrateFloors();
-  for(const el of $('blkBox').querySelectorAll('[data-f]'))el.value=P.fl[el.dataset.f]??'';
-  $('flx').innerHTML=P.fl.extras.length?`<p class="flt">Pavimentos extras</p>`+P.fl.extras.map((x,i)=>`<div class="flx" data-i="${i}">
-    <input type="text" class="txt" data-k="n" value="${esc(x.n)}" placeholder="Nome, ex.: 2° Pavimento – Garagem" aria-label="Nome do pavimento extra">
-    <input type="number" step="0.01" data-k="c" value="${x.c}" placeholder="Corte" aria-label="Corte do pavimento extra">
-    <button type="button" class="sec" data-del="${i}" aria-label="Remover pavimento">×</button></div>`).join(''):'';
-  const man=!!P.floorsManual;
-  $('blkBox').hidden=man;$('floorsBox').hidden=!man;
-  $('blkMode').textContent=man?'Voltar ao formulário':'Editar a lista à mão';
-  applyBlocks();
+  // a lista de pavimentos vem sempre do PDF de cortes ou de uma lista colada (o formulário manual saiu)
+  if(!P.floorsManual){applyBlocks();P.floorsManual=true}
+  $('floors').value=P.floors||'';contaAndares();
 }
-const flChanged=()=>{applyBlocks();bDirty=true;save();renderPages();scheduleDraw()};
-$('blkBox').addEventListener('input',e=>{
-  const f=e.target.dataset.f;if(f){P.fl[f]=e.target.value;flChanged();return}
-  const row=e.target.closest('.flx');if(row){P.fl.extras[+row.dataset.i][e.target.dataset.k]=e.target.value;flChanged()}
-});
-$('flx').addEventListener('click',e=>{const i=e.target.dataset.del;if(i==null)return;P.fl.extras.splice(+i,1);drawBlocks();flChanged()});
-$('flxAdd').addEventListener('click',()=>{P.fl.extras.push({n:'',c:''});drawBlocks();save();const r=$('flx').lastElementChild;if(r)r.querySelector('input').focus()});
-$('blkMode').addEventListener('click',()=>{
-  if(P.floorsManual){P.floorsManual=false;drawBlocks();save();renderPages()}
-  else{P.floorsManual=true;drawBlocks();save();$('floors').focus()}
-});
+$('floors').addEventListener('input',contaAndares);
 
 /* ---------- pontos de inserção ---------- */
 function drawPtList(){
