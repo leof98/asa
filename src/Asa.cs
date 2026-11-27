@@ -26,8 +26,8 @@ using Microsoft.Web.WebView2.WinForms;
 [assembly: AssemblyProduct("Asa")]
 [assembly: AssemblyDescription("Asa: assistente de tour (plano de voo de fotos e de vídeo)")]
 [assembly: AssemblyCompany("Criando Valor")]
-[assembly: AssemblyVersion("0.2.1.0")]
-[assembly: AssemblyFileVersion("0.2.1.0")]
+[assembly: AssemblyVersion("0.2.2.0")]
+[assembly: AssemblyFileVersion("0.2.2.0")]
 
 static class Programa
 {
@@ -61,7 +61,7 @@ static class Programa
 
 sealed class Janela : Form
 {
-    internal const string Versao = "0.2.1";
+    internal const string Versao = "0.2.2";
     readonly WebView2 web;
     readonly JavaScriptSerializer json = new JavaScriptSerializer();
     readonly string pastaApp, pastaDados, pastaAsa, pastaProjetos, pastaModelos, pastaLocais;
@@ -95,6 +95,23 @@ sealed class Janela : Form
         Controls.Add(web);
         Load += AoCarregar;
         FormClosing += AoFechar;
+    }
+
+    // Barra de título do Windows escura, na cor da barra do Asa (igual à Central). No Windows 11 fica roxa; no 10, só escura.
+    [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr hwnd, int atributo, ref int valor, int tamanho);
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        try
+        {
+            int um = 1;
+            DwmSetWindowAttribute(Handle, 20, ref um, 4);              // modo escuro
+            int legenda = 0x1d | (0x09 << 8) | (0x3a << 16);           // #1d093a, a cor da barra do Asa
+            DwmSetWindowAttribute(Handle, 35, ref legenda, 4);
+            int texto = 0xf3 | (0xee << 8) | (0xf8 << 16);             // #f3eef8
+            DwmSetWindowAttribute(Handle, 36, ref texto, 4);
+        }
+        catch (Exception) { }
     }
 
     // Ao fechar: dá um instante para a página gravar a última mudança do projeto
@@ -256,7 +273,7 @@ sealed class Janela : Form
                 projetoAtual = Txt(a, "nome");
                 if (!string.IsNullOrEmpty(Txt(a, "arquivo"))) proximoArquivo = Txt(a, "arquivo");   // nome com acentos para o próximo arquivo baixado
                 return true;
-            case "pdf": return await Pdf(Txt(a, "nome"), Txt(a, "titulo"));
+            case "pdf": return await Pdf(Txt(a, "nome"), Txt(a, "titulo"), Txt(a, "papel"));
             case "pasta.projeto":
                 {
                     string d = PastaSaida(Txt(a, "nome"));
@@ -399,12 +416,13 @@ sealed class Janela : Form
         return d;
     }
 
-    async Task<object> Pdf(string nome, string titulo)
+    async Task<object> Pdf(string nome, string titulo, string papel)
     {
         string arq = Path.Combine(PastaSaida(nome), Seguro(string.IsNullOrEmpty(titulo) ? "Plano de Voo - " + nome : titulo) + ".pdf");
         CoreWebView2PrintSettings p = web.CoreWebView2.Environment.CreatePrintSettings();
         p.Orientation = CoreWebView2PrintOrientation.Portrait;
-        p.PageWidth = 8.5; p.PageHeight = 11;   // Carta
+        if (papel == "a4") { p.PageWidth = 210 / 25.4; p.PageHeight = 297 / 25.4; }   // A4 (plano de fotos)
+        else { p.PageWidth = 8.5; p.PageHeight = 11; }                                 // Carta (plano de vídeo)
         p.MarginTop = 0; p.MarginBottom = 0; p.MarginLeft = 0; p.MarginRight = 0;
         p.ShouldPrintBackgrounds = true;
         p.ShouldPrintHeaderAndFooter = false;

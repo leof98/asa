@@ -61,3 +61,19 @@ async function previsaoDia(chave,lat,lon,iso,cfg){
   const chuva=horas.filter(x=>(x.rain>=c.r&&(+x.mm||0)>c.mm)||x.th>=c.r).length;
   return{estado:chuva?'chuva':'ok',horas:horas.length,chuva};
 }
+
+// ---- menu ⋯ da barra do Asa: itens [rótulo, ação] ----
+function menuAsa(botao,itens){
+  let m=null;
+  const fechar=()=>{if(m){m.remove();m=null;botao.setAttribute('aria-expanded','false')}};
+  botao.setAttribute('aria-expanded','false');
+  botao.addEventListener('click',e=>{
+    e.stopPropagation();if(m){fechar();return}
+    m=document.createElement('div');m.className='asamenu';m.setAttribute('role','menu');
+    const r=botao.getBoundingClientRect();m.style.right=Math.round(innerWidth-r.right)+'px';m.style.top=Math.round(r.bottom+6)+'px';
+    for(const [rot,fn] of itens){const b=document.createElement('button');b.type='button';b.setAttribute('role','menuitem');b.textContent=rot;b.onclick=()=>{fechar();fn()};m.appendChild(b)}
+    document.body.appendChild(m);botao.setAttribute('aria-expanded','true');m.firstChild.focus();
+  });
+  document.addEventListener('click',e=>{if(m&&!m.contains(e.target))fechar()});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')fechar()});
+}

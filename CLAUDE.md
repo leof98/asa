@@ -76,7 +76,7 @@ O nome é **Asa** e o subtítulo é **Assistente de Tour**. É uma ferramenta de
 | `mini.gravar` | miniatura do card em `Projetos\.miniaturas\<nome>.jpg` |
 | `modelo.listar` / `gravar` / `renomear` / `excluir` | modelos em `Documentos\Asa\Modelos`. `renomear` grava com o nome novo e apaga o arquivo antigo (sem Lixeira) |
 | `contexto` | define o empreendimento atual (`nome`), que decide para onde vão os downloads. Com `arquivo`, define o nome do próximo download (veja a nota abaixo) |
-| `pdf` | `PrintToPdfAsync` em tamanho Carta, margem 0, com fundos, gravado em `Documentos\Asa\<nome>\<titulo>.pdf` |
+| `pdf` | `PrintToPdfAsync` em A4 (`papel:"a4"`, plano de fotos) ou Carta (plano de vídeo), margem 0, com fundos, gravado em `Documentos\Asa\<nome>\<titulo>.pdf` |
 | `pasta.projeto` / `abrir` / `mostrar` | abre pastas e arquivos no Explorer |
 | `notificar` | balão do Windows |
 | evento `baixado` | a página recebe `asa:baixado` com `{caminho}` ou `{erro}` |
@@ -88,7 +88,7 @@ O WebView2 não aceita acentos no atributo `download`: o arquivo sai como "downl
 ### Páginas (`app\`)
 | Arquivo | Papel |
 |---|---|
-| `index.html` + `inicio.js` | tela inicial: abas Planos de voo, Locais próximos, Modelos, Configurações; cards; busca e filtros; importação; diálogo de novo; configurações; previsão a cada 3 h com aviso no Windows; checagem de atualização |
+| `index.html` + `inicio.js` | tela inicial: abas Planos de voo e Locais próximos; engrenagem no canto (Configurações, com os Modelos dentro); cards; busca; ⋯ com "Abrir pasta"; diálogo de novo; previsão a cada 3 h com aviso no Windows. Status no topo só aparece com problema (falta a chave, chuva prevista). Sem filtros e sem importação desde 27/11/2026 |
 | `abertura.js` | animação de abertura (veja a seção 5), uma vez por sessão |
 | `asa.css`, `comum.js` | identidade visual e funções comuns: `ASA.chamar`, `aviso`, `avisoArquivo`, `escH`, `previsaoDia` |
 | `gerador.html` | o gerador de plano de voo (HTML grande, autocontido) com pequenos ajustes para o Asa |
@@ -117,6 +117,10 @@ O WebView2 não aceita acentos no atributo `download`: o arquivo sai como "downl
 - No gerador, `loadProject(id)` chama `writeLib()` antes. Para carregar dados novos, a ponte usa um id novo e apaga o velho (função `carregarDados`).
 - Nos dois, as variáveis do script da página (`P`, `LIB`, `G`, `save`, `loadProject`, `$`...) são `let`/`const`/`function` de nível superior. As pontes usam essas variáveis direto, então **não declare nas pontes um nome que a página já declara**: dá erro de redeclaração.
 - O `docx@9.5.1` (iife) é carregado na hora pelo jsdelivr, e o `mp4-muxer@5.2.2` idem. Precisa de internet.
+- O CesiumJS 1.139.0 fica local em `app\cesium\` (sem `index.js`/`index.cjs` e sem as texturas `maki`, `SkyBox` e `NaturalEarthII`). O 3D do Google usa `maximumScreenSpaceError` 8 na edição e 4 no PDF, 18 conexões para `tile.googleapis.com` e `requestRenderMode`.
+- Os mapas do PDF ficam guardados em `<projeto>.fotos\mapa-<vista>.jpg`, com a assinatura da vista no localStorage (`asa.mapas`); o PDF seguinte reaproveita o que não mudou (`ASA_MAPA_LER`/`ASA_MAPA_GRAVAR` na `ponte.js`).
+- A barra das telas internas tem o ⋯ (`menuAsa` em `comum.js`) com "Salvar como modelo" e "Pasta do empreendimento".
+- A barra de título do Windows é pintada na cor da barra do Asa (#1d093a) por `DwmSetWindowAttribute` (atributos 20, 35 e 36), igual à Central.
 - `ponte.css` esconde `.top`, `#proj` e `.pbar` das páginas originais, que tinham a chave e a lista de projetos do navegador.
 
 ### Pastas do usuário

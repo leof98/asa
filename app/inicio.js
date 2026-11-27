@@ -1,19 +1,34 @@
 'use strict';
 // Tela inicial do Asa: planos de voo, locais próximos, modelos, configurações e previsão do tempo.
 const $=id=>document.getElementById(id);
-let INFO={},CFG={},PROJ=[],MOD=[],LOC=[],FILTRO='todos',TIPO='foto',ABA='projetos';
+let INFO={},CFG={},PROJ=[],MOD=[],LOC=[],TIPO='foto',ABA='projetos';
 
 /* ---------- abas ---------- */
 function aba(nome){
   document.querySelectorAll('.asanav button').forEach(b=>{if(b.dataset.aba===nome)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  if(nome==='modelos')nome='config'; // os modelos ficam dentro das configurações
   document.querySelectorAll('main>section').forEach(s=>s.hidden=s.dataset.sec!==nome);
   ABA=nome;
-  $('btNovo').textContent=nome==='locais'?'+ Nova lista de locais':'+ Novo plano';
+  if(nome==='config')$('btConfig').setAttribute('aria-current','page');else $('btConfig').removeAttribute('aria-current');
   try{history.replaceState(null,'',nome==='projetos'?'index.html':'#'+nome)}catch(e){}
-  if(nome==='modelos')carregarModelos();
+  if(nome==='config')carregarModelos();
   if(nome==='locais')carregarLocais();
 }
 document.querySelector('.asanav').addEventListener('click',e=>{const a=e.target.dataset.aba;if(a)aba(a)});
+$('btConfig').addEventListener('click',()=>aba(ABA==='config'?'projetos':'config'));
+
+/* ---------- menu ⋯ das listas ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-menu]');if(!b)return;
+  e.stopImmediatePropagation();const ja=menuAberto&&menuAberto.dataset.de===b.dataset.menu;fecharMenu();if(ja)return;
+  const m=document.createElement('div');m.className='menu';m.dataset.de=b.dataset.menu;
+  m.style.cssText=`position:fixed;right:${Math.round(innerWidth-b.getBoundingClientRect().right)}px;top:${Math.round(b.getBoundingClientRect().bottom+6)}px`;
+  m.innerHTML=b.dataset.menu==='locais'?'<button type="button" data-a="pastaL">Abrir a pasta das listas</button>':'<button type="button" data-a="pasta">Abrir a pasta dos planos</button>';
+  m.addEventListener('click',ev=>{const a=ev.target.dataset.a;fecharMenu();
+    if(a==='pasta')ASA.chamar('abrir',{caminho:INFO.pastaProjetos});
+    if(a==='pastaL')ASA.chamar('abrir',{caminho:INFO.pastaLocais});});
+  document.body.appendChild(m);menuAberto=m;
+});
 
 /* ---------- projetos ---------- */
 function lerProjeto(r){
@@ -28,7 +43,7 @@ async function carregarProjetos(){
 }
 const prevKey=p=>`${(+p.lat).toFixed(4)},${(+p.lon).toFixed(4)},${p.iso}`;
 function chipPrev(p){
-  if(!p.iso)return p.data?`<span class="chip"><i class="dot g"></i>${escH(p.data)}</span>`:`<span class="chip"><i class="dot g"></i>Sem data</span>`;
+  if(!p.iso)return p.data?`<span class="chip"><i class="dot g"></i>${escH(p.data)}</span>`:'';
   if(p.iso<hojeISO())return`<span class="chip"><i class="dot g"></i>Captação ${ddmm(p.iso)} · passou</span>`;
   const c=(CFG.prev||{})[prevKey(p)];
   if(!c)return`<span class="chip"><i class="dot g"></i>Captação ${ddmm(p.iso)}</span>`;
@@ -38,17 +53,16 @@ function chipPrev(p){
 }
 function desenharLista(){
   const q=$('busca').value.trim().toLowerCase();
-  const l=PROJ.filter(p=>(FILTRO==='todos'||(FILTRO==='marcada'?p.iso>=hojeISO():p.tipo===FILTRO))&&(!q||(p.nome+' '+p.addr).toLowerCase().includes(q)));
-  $('titLista').textContent=PROJ.length?(q||FILTRO!=='todos'?`${l.length} de ${PROJ.length} planos`:'Recentes'):'Planos de voo';
+  const l=PROJ.filter(p=>!q||(p.nome+' '+p.addr).toLowerCase().includes(q));
+  $('titLista').textContent=q?`${l.length} de ${PROJ.length}`:'';
   $('lista').innerHTML=l.map((p,i)=>`<div class="card" role="button" tabindex="0" data-i="${PROJ.indexOf(p)}">
-      <div class="th vazio"><img src="asa.svg" alt=""><span class="chip tag">${p.tipo==='video'?'Vídeo':'Fotos'}</span></div>
+      <div class="th vazio"><img src="asa.svg" alt="">${p.tipo==='video'?'<span class="video" title="Plano de vídeo"><svg viewBox="0 0 24 24" aria-label="Vídeo"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h10A1.5 1.5 0 0 1 16 6.5v2.3l4.2-2.6a.5.5 0 0 1 .8.4v10.8a.5.5 0 0 1-.8.4L16 15.2v2.3a1.5 1.5 0 0 1-1.5 1.5h-10A1.5 1.5 0 0 1 3 17.5z"/></svg></span>':''}</div>
       <button type="button" class="sec mais" data-mais="1" aria-label="Mais opções de ${escH(p.nome)}">⋯</button>
       <div class="in"><b>${escH(p.nome)}</b><div class="meta">${escH(p.addr)||'&nbsp;'}</div><div class="ft">${chipPrev(p)}</div></div>
     </div>`).join('')+`<button type="button" class="novo" id="cardNovo"><div><span>+</span>Novo plano<br><small style="font-weight:400">de fotos ou de vídeo</small></div></button>`;
-  if(!PROJ.length)$('lista').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhum plano ainda. Crie um plano novo ou importe os que você exportou do gerador antigo.</p>');
+  if(!PROJ.length)$('lista').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhum plano ainda. Crie o primeiro no cartão abaixo.</p>');
 }
 $('busca').addEventListener('input',desenharLista);
-document.querySelector('.bar2').addEventListener('click',e=>{const f=e.target.dataset.f;if(!f)return;FILTRO=f;document.querySelectorAll('.pill').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===f));desenharLista()});
 
 async function abrirProjeto(p){
   try{
@@ -84,23 +98,7 @@ $('lista').addEventListener('click',e=>{
   abrirProjeto(p);
 });
 $('lista').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('card'))e.target.click()});
-$('btPasta').addEventListener('click',()=>ASA.chamar('abrir',{caminho:INFO.pastaProjetos}));
 
-/* ---------- importar (cópias de segurança do gerador antigo) ---------- */
-$('btImportar').addEventListener('click',()=>$('arqImportar').click());
-$('arqImportar').addEventListener('change',async e=>{
-  const fs=[...e.target.files];e.target.value='';let n=0;
-  for(const f of fs){
-    try{
-      const j=JSON.parse(await f.text());const d=j.projeto||(j.data&&j.name?j.data:null)||j;
-      if(!d||typeof d!=='object'||!('lat' in d))throw new Error('não é um plano de voo');
-      const arquivo=await ASA.chamar('proj.gravar',{arquivo:'',texto:JSON.stringify({app:'asa',versao:1,projeto:d}),nome:d.name||f.name.replace(/\.\w+$/,'')});
-      for(const [id,url] of Object.entries(j.fotos||{}))await ASA.chamar('foto.gravar',{arquivo,id,dados:url});
-      n++;
-    }catch(er){aviso(`${f.name}: ${er.message}`,{tipo:'erro',ms:10000})}
-  }
-  if(n){aviso(n===1?'1 plano importado.':`${n} planos importados.`);carregarProjetos()}
-});
 
 /* ---------- novo plano ---------- */
 // comModelo: o arquivo do modelo já escolhido (botão "Novo plano com este modelo" na aba Modelos)
@@ -115,7 +113,6 @@ function syncNovo(){
   const ms=MOD.filter(m=>m.tipo===TIPO);
   $('novoModelo').innerHTML=`<option value="">Em branco</option>`+ms.map(m=>`<option value="${MOD.indexOf(m)}">Modelo: ${escH(m.nome)}</option>`).join('');
 }
-$('btNovo').addEventListener('click',()=>ABA==='locais'?novoLocais():novoPlano());
 $('novoTipo').addEventListener('click',e=>{const t=e.target.dataset.t;if(t){TIPO=t;syncNovo()}});
 $('novoCancelar').addEventListener('click',()=>$('dlgNovo').hidden=true);
 $('dlgNovo').addEventListener('keydown',e=>{if(e.key==='Escape')$('dlgNovo').hidden=true;if(e.key==='Enter'&&e.target.id==='novoNome')$('novoCriar').click()});
@@ -163,13 +160,13 @@ function chipsLocais(l){
 function desenharLocais(){
   const q=$('buscaL').value.trim().toLowerCase();
   const l=LOC.filter(x=>!q||(x.nome+' '+x.addr).toLowerCase().includes(q));
-  $('titListaL').textContent=LOC.length?(q?`${l.length} de ${LOC.length}`:'Recentes'):'Locais próximos';
+  $('titListaL').textContent=q?`${l.length} de ${LOC.length}`:'';
   $('listaL').innerHTML=l.map(x=>`<div class="card" role="button" tabindex="0" data-i="${LOC.indexOf(x)}">
       <div class="th loc">${radar(x.d)}<span class="chip tag">${PADRAO[x.d.std]||PADRAO.med}</span></div>
       <button type="button" class="sec mais" data-mais="1" aria-label="Mais opções de ${escH(x.nome)}">⋯</button>
       <div class="in"><b>${escH(x.nome)}</b><div class="meta">${escH(x.addr)||'&nbsp;'}</div><div class="ft">${chipsLocais(x)}</div></div>
     </div>`).join('')+`<button type="button" class="novo" id="cardNovoL"><div><span>+</span>Nova lista de locais<br><small style="font-weight:400">mercados, escolas, praias… perto do terreno</small></div></button>`;
-  if(!LOC.length)$('listaL').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhuma lista ainda. Crie uma nova ou traga as do navegador em <b>Importar do navegador</b>.</p>');
+  if(!LOC.length)$('listaL').insertAdjacentHTML('afterbegin','<p class="vazio-txt" style="grid-column:1/-1">Nenhuma lista ainda. Crie a primeira no cartão abaixo.</p>');
 }
 $('buscaL').addEventListener('input',desenharLocais);
 async function abrirLocais(x){
@@ -203,7 +200,6 @@ $('listaL').addEventListener('click',e=>{
   abrirLocais(x);
 });
 $('listaL').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('card'))e.target.click()});
-$('btPastaL').addEventListener('click',()=>ASA.chamar('abrir',{caminho:INFO.pastaLocais}));
 
 // nova lista: o terreno pode vir de um plano de voo (só a posição e o endereço; as duas coisas seguem separadas)
 let PLANOS_T=[];
@@ -221,48 +217,6 @@ $('locCriar').addEventListener('click',()=>{
   const nome=$('locNome').value.trim()||(p&&p.nome)||'Novo empreendimento';
   localStorage.setItem('asa.locais',JSON.stringify({novo:true,nome,plano:p?{lat:+p.lat,lon:+p.lon,addr:p.addr||'',name:p.nome}:null}));
   location.href='locais.html';
-});
-
-// importar do Locais Próximos do navegador (o comando não leva a chave do Google)
-const CMD_IMP=`copy(JSON.stringify({asaLocais:1,projetos:JSON.parse(localStorage.getItem('locais.projetos')||'{}'),ajustes:(g=>{delete g.key;return g})(JSON.parse(localStorage.getItem('locais.v1')||'{}'))}))`;
-$('impCmd').textContent=CMD_IMP;
-$('btImportarL').addEventListener('click',()=>{$('impTexto').value='';$('dlgImpL').hidden=false;setTimeout(()=>$('impTexto').focus(),30)});
-$('impCopiar').addEventListener('click',async()=>{
-  try{await navigator.clipboard.writeText(CMD_IMP);$('impCopiar').textContent='Copiado'}
-  catch(e){const r=document.createRange();r.selectNodeContents($('impCmd'));const s=getSelection();s.removeAllRanges();s.addRange(r)}
-  setTimeout(()=>$('impCopiar').textContent='Copiar',2500);
-});
-$('impCancelar').addEventListener('click',()=>$('dlgImpL').hidden=true);
-$('dlgImpL').addEventListener('keydown',e=>{if(e.key==='Escape')$('dlgImpL').hidden=true});
-$('impOk').addEventListener('click',async()=>{
-  let j;try{j=JSON.parse($('impTexto').value.trim())}catch(e){aviso('O texto colado não é o que o comando copia. Rode o comando de novo e cole aqui.',{tipo:'erro',ms:9000});return}
-  const lib=j.projetos||j,lista=Object.values((lib&&lib.list)||{}).filter(d=>d&&typeof d==='object'&&Array.isArray(d.places));
-  const aj=j.ajustes||null;
-  if(!lista.length&&!aj){aviso('Não achei listas de locais no texto colado.',{tipo:'erro'});return}
-  $('impOk').disabled=true;let n=0;
-  try{
-    const existentes=new Set(LOC.map(x=>x.nome.toLowerCase()));
-    for(const d of lista){
-      if(existentes.has(String(d.name||'').toLowerCase()))continue;   // já está no Asa
-      await ASA.chamar('proj.gravar',{pasta:'locais',arquivo:'',texto:JSON.stringify({app:'asa',tipo:'locais',versao:1,locais:d},(k,v)=>k&&k[0]==='_'?undefined:v),nome:d.name||'Sem nome'});n++;
-    }
-    let nf=0;
-    if(aj){
-      const cur=Object.assign({},CFG.locais||{});delete aj.key;
-      const fx=cur.fixed||[],gids=new Set(fx.map(f=>f.gid));
-      for(const f of aj.fixed||[])if(f&&f.gid&&!gids.has(f.gid)){fx.push(f);gids.add(f.gid);nf++}
-      cur.fixed=fx;
-      if(cur.chains==null&&aj.chains!=null)cur.chains=aj.chains;
-      if(cur.radius==null&&aj.radius!=null)cur.radius=aj.radius;
-      CFG.locais=cur;await ASA.chamar('config.gravar',{locais:cur});
-      localStorage.setItem('asa.locais.ajustes',JSON.stringify(cur));
-    }
-    $('dlgImpL').hidden=true;
-    const pul=lista.length-n;
-    aviso(`${n} lista${n===1?'':'s'} importada${n===1?'':'s'}${pul?` (${pul} já estava${pul===1?'':'m'} no Asa)`:''}${nf?`, ${nf} lugar${nf===1?'':'es'} fixo${nf===1?'':'s'}`:''}.`,{ms:9000});
-    carregarLocais();
-  }catch(e){aviso('A importação parou: '+e.message,{tipo:'erro'})}
-  finally{$('impOk').disabled=false}
 });
 
 /* ---------- modelos ---------- */
@@ -314,7 +268,7 @@ function chaveParaGerador(k){
 }
 function syncChips(){
   const tem=!!CFG.chave;
-  $('chGoogle').innerHTML=`<i class="dot${tem?'':' a'}"></i>${tem?'Google conectado':'Falta a chave do Google'}`;
+  $('chGoogle').hidden=tem;
 }
 $('chGoogle').addEventListener('click',()=>aba('config'));
 $('cfgVer').addEventListener('click',()=>{const i=$('cfgChave');i.type=i.type==='password'?'text':'password';$('cfgVer').textContent=i.type==='password'?'Mostrar':'Ocultar'});
@@ -346,7 +300,10 @@ async function verificarPrevisoes(forcar){
   // limpa o que já passou
   for(const k of Object.keys(CFG.prev))if(k.slice(-10)<hoje){delete CFG.prev[k];mudou=true}
   if(mudou){ASA.chamar('config.gravar',{prev:CFG.prev});desenharLista()}
-  if(alvos.length){const h=new Date();$('chPrev').hidden=false;$('chPrev').innerHTML=`<i class="dot${alvos.some(p=>(CFG.prev[prevKey(p)]||{}).estado==='chuva')?' r':''}"></i>Previsão às ${String(h.getHours()).padStart(2,'0')}:${String(h.getMinutes()).padStart(2,'0')}`}
+  // só aparece quando alguma captação marcada está com chuva prevista
+  const chuva=alvos.filter(p=>(CFG.prev[prevKey(p)]||{}).estado==='chuva');
+  $('chPrev').hidden=!chuva.length;
+  if(chuva.length){$('chPrev').innerHTML=`<i class="dot r"></i>Chuva prevista: ${chuva.map(p=>escH(p.nome)).join(', ')}`;$('chPrev').title='Previsão conferida às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}
 }
 setInterval(()=>verificarPrevisoes(false),3*3600e3);
 

@@ -90,9 +90,26 @@ async function restaurarFotos(){
   if(n){await loadImgs();drawTakes();renderPages();scheduleDraw()}
 }
 
+/* ---------- mapas do PDF guardados na pasta de fotos do projeto ----------
+   cada vista fica em <projeto>.fotos\mapa-<vista>.jpg; a "assinatura" (posição, largura, proporção, rotação)
+   fica no localStorage. Se a vista não mudou, o próximo PDF usa a imagem guardada em vez de baixar o 3D de novo. */
+const MAPAS_SIG='asa.mapas';
+const lerSigs=()=>{try{return JSON.parse(localStorage.getItem(MAPAS_SIG)||'{}')}catch(e){return{}}};
+window.ASA_MAPA_LER=async(vista,sig)=>{
+  if(!ASA_PROJ.arquivo)return null;
+  if(lerSigs()[ASA_PROJ.arquivo+'|'+vista]!==sig)return null;
+  return await ASA.chamar('foto.ler',{arquivo:ASA_PROJ.arquivo,id:'mapa-'+vista});
+};
+window.ASA_MAPA_GRAVAR=async(vista,sig,dados)=>{
+  if(!ASA_PROJ.arquivo)return;
+  await ASA.chamar('foto.gravar',{arquivo:ASA_PROJ.arquivo,id:'mapa-'+vista,dados});
+  const s=lerSigs();s[ASA_PROJ.arquivo+'|'+vista]=sig;
+  try{localStorage.setItem(MAPAS_SIG,JSON.stringify(s))}catch(e){}
+};
+
 /* ---------- PDF direto e arquivos baixados ---------- */
 window.ASA_PDF=async()=>{
-  try{const c=await ASA.chamar('pdf',{nome:P.name,titulo:`Plano de Voo - ${P.name||'projeto'}`});avisoArquivo('PDF',c)}
+  try{const c=await ASA.chamar('pdf',{nome:P.name,titulo:`Plano de Voo - ${P.name||'projeto'}`,papel:isVid()?'carta':'a4'});avisoArquivo('PDF',c)}
   catch(e){aviso('Não consegui gerar o PDF: '+e.message,{tipo:'erro',ms:12000})}
 };
 document.addEventListener('asa:baixado',e=>{
@@ -107,13 +124,12 @@ function barraAsa(){
   b.innerHTML=`<button type="button" class="voltar" id="asaVoltar" title="Voltar à tela inicial">← Início</button>
     <span class="marca"><img src="asa.svg" alt="">ASA</span><span class="sep"></span>
     <span class="ferr">Plano de voo</span><span class="nome"></span><span class="salvo"></span><span class="sp"></span>
-    <span class="atalhos" title="Atalhos">Ctrl+Z desfaz · Ctrl+P gera o PDF</span>
-    <button type="button" id="asaModelo">Salvar como modelo</button>
-    <button type="button" id="asaPasta" title="PDF, Word e vídeos deste empreendimento">Pasta do empreendimento</button>`;
+    <button type="button" class="tres" id="asaMais" aria-label="Mais opções" aria-haspopup="menu" title="Mais opções (Ctrl+Z desfaz · Ctrl+P gera o PDF)">⋯</button>`;
   document.body.prepend(b);
   b.querySelector('#asaVoltar').onclick=async()=>{await GRAV.agora();location.href='index.html'};
-  b.querySelector('#asaPasta').onclick=()=>ASA.chamar('pasta.projeto',{nome:P.name});
-  b.querySelector('#asaModelo').onclick=salvarModelo;
+  menuAsa(b.querySelector('#asaMais'),[
+    ['Salvar como modelo',salvarModelo],
+    ['Pasta do empreendimento',()=>ASA.chamar('pasta.projeto',{nome:P.name})]]);
 }
 function salvarModelo(){
   const dl=document.createElement('div');dl.className='asadlg';
@@ -126,7 +142,7 @@ function salvarModelo(){
   dl.querySelector('#asaModSim').onclick=async()=>{
     const nome=inp.value.trim();if(!nome){inp.focus();return}
     const d=pick();
-    for(const k of['name','addr','date','dateISO','time','lat','lon','view','locView','ovView','wx','monSent','sim'])delete d[k];
+    for(const k of['name','addr','date','dateISO','time','drone','lat','lon','view','locView','ovView','wx','monSent','sim'])delete d[k];
     if(d.vid)for(const t of d.vid.takes){t.photos=[];t.lock=null;t.view={auto:true}}
     d._modelo=nome;
     try{await ASA.chamar('modelo.gravar',{nome,texto:JSON.stringify({app:'asa',versao:1,modelo:true,projeto:d})});fechar();aviso(`Modelo "${nome}" salvo.`)}

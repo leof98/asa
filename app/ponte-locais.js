@@ -93,11 +93,10 @@ function barraLocais(){
   b.innerHTML=`<button type="button" class="voltar" id="asaVoltar" title="Voltar à tela inicial">← Início</button>
     <span class="marca"><img src="asa.svg" alt="">ASA</span><span class="sep"></span>
     <span class="ferr">Locais próximos</span><span class="nome"></span><span class="salvo"></span><span class="sp"></span>
-    <span class="atalhos" title="Atalhos">Ctrl+Z desfaz · Ctrl+P gera o PDF</span>
-    <button type="button" id="asaPasta" title="PDF e Word deste empreendimento">Pasta do empreendimento</button>`;
+    <button type="button" class="tres" id="asaMais" aria-label="Mais opções" aria-haspopup="menu" title="Mais opções (Ctrl+Z desfaz · Ctrl+P gera o PDF)">⋯</button>`;
   document.body.prepend(b);
   b.querySelector('#asaVoltar').onclick=async()=>{await LOC_GRAV.agora();location.href='index.html#locais'};
-  b.querySelector('#asaPasta').onclick=()=>ASA.chamar('pasta.projeto',{nome:P.name});
+  menuAsa(b.querySelector('#asaMais'),[['Pasta do empreendimento',()=>ASA.chamar('pasta.projeto',{nome:P.name})]]);
 }
 const ehCampoLoc=el=>el&&(el.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)&&!/^(checkbox|radio|range|button)$/.test(el.type||''));
 window.addEventListener('keydown',e=>{
